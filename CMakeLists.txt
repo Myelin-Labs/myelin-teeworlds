@@ -89,6 +89,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
 
 set(SERVER_EXECUTABLE teeworlds_srv CACHE STRING "Name of the built server executable")
 set(CLIENT_EXECUTABLE teeworlds CACHE STRING "Name of the build client executable")
+set(REPLAYER_EXECUTABLE teeworlds_replayer CACHE STRING "Name of the replayer executable")
 
 ########################################################################
 # Download dependencies
@@ -1659,6 +1660,29 @@ if(TARGET_OS AND TARGET_OS STREQUAL "mac")
   list(APPEND TARGETS_OWN ${TARGET_SERVER_LAUNCHER})
   list(APPEND TARGETS_LINK ${TARGET_SERVER_LAUNCHER})
 endif()
+
+########################################################################
+# REPLAYER
+########################################################################
+
+set_src(REPLAYER_RUNNER GLOB src/replayer
+  replayer.cpp
+)
+
+set(REPLAYER_SRC ${REPLAYER_RUNNER} ${GAME_SERVER} ${GAME_GENERATED_SERVER})
+
+set(TARGET_REPLAYER ${REPLAYER_EXECUTABLE})
+add_executable(${TARGET_REPLAYER}
+  ${REPLAYER_SRC}
+  ${DEPS}
+  # TODO: revise this later, I'm not sure if RISC-V can have all of engine-shared
+  $<TARGET_OBJECTS:engine-shared>
+  $<TARGET_OBJECTS:game-shared>
+)
+
+target_link_libraries(${TARGET_REPLAYER} ${LIBS})
+list(APPEND TARGETS_OWN ${TARGET_REPLAYER})
+list(APPEND TARGETS_LINK ${TARGET_REPLAYER})
 
 ########################################################################
 # VARIOUS TARGETS

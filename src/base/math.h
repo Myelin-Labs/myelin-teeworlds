@@ -5,6 +5,8 @@
 
 #include <stdlib.h>
 
+#include "system.h"
+
 template<typename T>
 inline T clamp(T val, T min, T max)
 {
@@ -49,12 +51,12 @@ inline T bezier(const T p0, const T p1, const T p2, const T p3, TB amount)
 
 inline int random_int()
 {
-	return ((rand() & 0x7fff) << 16) | (rand() & 0xffff);
+	return ((vm_rand() & 0x7fff) << 16) | (vm_rand() & 0xffff);
 }
 
 inline float random_float()
 {
-	return rand() / (float)RAND_MAX;
+	return vm_rand() / (float)RAND_MAX;
 }
 
 const int fxpscale = 1 << 10;

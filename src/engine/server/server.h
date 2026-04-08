@@ -283,6 +283,10 @@ public:
 	virtual void SnapFreeID(int ID);
 	virtual void *SnapNewItem(int Type, int ID, int Size);
 	void SnapSetStaticsize(int ItemType, int Size);
+
+	virtual void OnStartMatch() { GameServer()->OnStartMatch(); }
+	virtual void OnEndMatch() { GameServer()->OnEndMatch(); }
+	virtual void Shutdown() { m_RunServer = false; }
 };
 
 #endif

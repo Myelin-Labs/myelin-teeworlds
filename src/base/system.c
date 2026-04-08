@@ -3428,6 +3428,17 @@ void uint_to_bytes_be(unsigned char *bytes, unsigned value)
 	bytes[3] = value & 0xffu;
 }
 
+// RNG algorithm is borrowed from musl libc
+static uint64_t g_vm_rand_state = 1;
+
+int vm_rand() {
+  g_vm_rand_state = 6364136223846793005ULL * g_vm_rand_state + 1;
+  return g_vm_rand_state >> 33;
+}
+
+void vm_srand(int seed) {
+  g_vm_rand_state = seed - 1;
+}
 
 #if defined(__cplusplus)
 }

@@ -175,6 +175,9 @@ public:
 	virtual void OnConsoleInit();
 	virtual void OnShutdown();
 
+	virtual void OnStartMatch() {}
+	virtual void OnEndMatch() {}
+
 	virtual void OnTick();
 	virtual void OnPreSnap();
 	virtual void OnSnap(int ClientID);

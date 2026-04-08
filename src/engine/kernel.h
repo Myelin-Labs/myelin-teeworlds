@@ -10,14 +10,14 @@ class IInterface;
 
 class IInterface
 {
-	// friend with the kernel implementation
-	friend class CKernel;
 	IKernel *m_pKernel;
 protected:
 	IKernel *Kernel() { return m_pKernel; }
 public:
 	IInterface() : m_pKernel(0) {}
 	virtual ~IInterface() {}
+
+	virtual void SetKernel(IKernel *pKernel) { m_pKernel = pKernel; }
 
 	//virtual unsigned InterfaceID() = 0;
 	//virtual const char *InterfaceName() = 0;

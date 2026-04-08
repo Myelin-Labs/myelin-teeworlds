@@ -65,7 +65,7 @@ public:
 			return false;
 		}
 
-		pInterface->m_pKernel = this;
+    pInterface->SetKernel(this);
 		m_aInterfaces[m_NumInterfaces].m_pInterface = pInterface;
 		str_copy(m_aInterfaces[m_NumInterfaces].m_aName, pName, sizeof(m_aInterfaces[m_NumInterfaces].m_aName));
 		m_NumInterfaces++;
@@ -81,7 +81,7 @@ public:
 			return false;
 		}
 
-		pInterface->m_pKernel = this;
+    pInterface->SetKernel(this);
 
 		return true;
 	}

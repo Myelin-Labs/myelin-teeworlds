@@ -2022,6 +2022,11 @@ unsigned bytes_be_to_uint(const unsigned char *bytes);
 */
 void uint_to_bytes_be(unsigned char *bytes, unsigned value);
 
+/*
+  Custom RNG functions so we can have deterministic behavior.
+ */
+int vm_rand();
+void vm_srand(int seed);
 
 #ifdef __cplusplus
 }

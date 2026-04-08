@@ -25,6 +25,8 @@
 #include <engine/shared/protocol.h>
 #include <engine/shared/snapshot.h>
 
+#include <game/server/vm_sequencer.h>
+
 #include <mastersrv/mastersrv.h>
 
 #include "register.h"
@@ -1847,11 +1849,15 @@ int main(int argc, const char **argv)
 	IEngine *pEngine = CreateEngine("Teeworlds_Server");
 	IEngineMap *pEngineMap = CreateEngineMap();
 	IMapChecker *pMapChecker = CreateMapChecker();
-	IGameServer *pGameServer = CreateGameServer();
+	CGameContext *pGameServer = new CGameContext;
 	IConsole *pConsole = CreateConsole(CFGFLAG_SERVER|CFGFLAG_ECON);
 	IEngineMasterServer *pEngineMasterServer = CreateEngineMasterServer();
 	IStorage *pStorage = CreateStorage("Teeworlds", IStorage::STORAGETYPE_SERVER, argc, argv);
 	IConfigManager *pConfigManager = CreateConfigManager();
+
+	// VM sequencer wrappers
+  CVMSequencer *pSequencer = new CVMSequencer;
+  CVMContextWrapper *pGameServerWrapper = new CVMContextWrapper(pGameServer);
 
 	pServer->InitRegister(&pServer->m_NetServer, pEngineMasterServer, pConfigManager->Values(), pConsole);
 
@@ -1863,7 +1869,7 @@ int main(int argc, const char **argv)
 		RegisterFail = RegisterFail || !pKernel->RegisterInterface(static_cast<IEngineMap*>(pEngineMap)); // register as both
 		RegisterFail = RegisterFail || !pKernel->RegisterInterface(static_cast<IMap*>(pEngineMap));
 		RegisterFail = RegisterFail || !pKernel->RegisterInterface(pMapChecker);
-		RegisterFail = RegisterFail || !pKernel->RegisterInterface(pGameServer);
+		RegisterFail = RegisterFail || !pKernel->RegisterInterface(static_cast<IGameServer*>(pGameServerWrapper));
 		RegisterFail = RegisterFail || !pKernel->RegisterInterface(pConsole);
 		RegisterFail = RegisterFail || !pKernel->RegisterInterface(pStorage);
 		RegisterFail = RegisterFail || !pKernel->RegisterInterface(pConfigManager);
@@ -1904,6 +1910,9 @@ int main(int argc, const char **argv)
 	// run the server
 	dbg_msg("server", "starting...");
 	int Ret = pServer->Run();
+
+  delete pGameServerWrapper;
+  delete pSequencer;
 
 	// free
 	delete pServer;

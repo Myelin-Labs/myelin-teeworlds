@@ -644,7 +644,15 @@ void IGameController::StartMatch()
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "start match type='%s' teamplay='%d'", m_pGameType, m_GameFlags&GAMEFLAG_TEAMS);
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
+
+	Server()->OnStartMatch();
 }
+
+void IGameController::EndMatch() {
+  Server()->OnEndMatch();
+  SetGameState(IGS_END_MATCH, TIMER_END);
+}
+
 
 void IGameController::StartRound()
 {
@@ -767,13 +775,16 @@ void IGameController::Tick()
 				break;
 			case IGS_END_MATCH:
 				// start next match
-				if(m_MatchCount >= m_GameInfo.m_MatchNum-1)
-					CycleMap();
 
-				if(Config()->m_SvMatchSwap)
-					GameServer()->SwapTeams();
-				m_MatchCount++;
-				StartMatch();
+// 				if(m_MatchCount >= m_GameInfo.m_MatchNum-1)
+// 					CycleMap();
+// 
+// 				if(Config()->m_SvMatchSwap)
+// 					GameServer()->SwapTeams();
+// 				m_MatchCount++;
+// 				StartMatch();
+        // For now, terminate the server after one match
+        Server()->Shutdown();
 				break;
 			case IGS_WARMUP_GAME:
 			case IGS_GAME_RUNNING:

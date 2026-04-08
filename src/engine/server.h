@@ -68,6 +68,10 @@ public:
 
 	virtual void DemoRecorder_HandleAutoStart() = 0;
 	virtual bool DemoRecorder_IsRecording() = 0;
+
+	virtual void OnStartMatch() = 0;
+	virtual void OnEndMatch() = 0;
+	virtual void Shutdown() = 0;
 };
 
 class IGameServer : public IInterface
@@ -78,6 +82,9 @@ public:
 	virtual void OnInit() = 0;
 	virtual void OnConsoleInit() = 0;
 	virtual void OnShutdown() = 0;
+
+	virtual void OnStartMatch() = 0;
+	virtual void OnEndMatch() = 0;
 
 	virtual void OnTick() = 0;
 	virtual void OnPreSnap() = 0;
