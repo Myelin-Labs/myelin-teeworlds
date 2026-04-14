@@ -109,106 +109,106 @@ class CMemoryTapeStream : public ITapeStream {
 };
 
 // ============================================================================
-// 2. CKB MOLECULE V2 STREAM (Strictly for RISC-V Blockchain Execution)
+// 2. CKB V2 STREAM (Strictly for RISC-V Blockchain Execution)
 // ============================================================================
 
 #ifdef __riscv
+#ifdef CKB
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 #include <ckb_syscalls.h>
-#include <molecule/molecule2_reader.h>
-
-// Static callback to prevent multiple definition errors in single-header design
-static uint32_t ckb_witness_mol2_read(uintptr_t args[4], uint32_t offset,
-                                      uint32_t length, uint8_t* buffer) {
-  uint64_t len = length;
-  size_t witness_index = (size_t)args[0];
-  size_t source_type = (size_t)args[1];
-  size_t tape_start_offset = (size_t)args[2];
-  int err = ckb_load_witness(buffer, &len, tape_start_offset + offset,
-                             witness_index, source_type);
-  if (err != 0) return 0;
-  return (uint32_t)len;
+#ifdef __cplusplus
 }
+#endif /* __cplusplus */
 
 class CCkbTapeStream : public ITapeStream {
  private:
   enum { CACHE_SIZE = 1024 };
-  uint8_t m_DataSourceMem[MOL2_DATA_SOURCE_LEN(CACHE_SIZE)];
-  mol2_data_source_t* m_pDataSource;
-  mol2_cursor_t m_MolCursor;
-  uint32_t m_CurrentOffset;
-  uint32_t m_TotalSize;
+  uint8_t m_Cache[CACHE_SIZE];
+  size_t m_SourceCurrent;
+  size_t m_SourceEnd;
+  size_t m_CacheCurrent;
+  size_t m_WitnessIndex;
+  size_t m_SourceType;
+
+  inline size_t RemainingSize() const { return m_SourceEnd - m_SourceCurrent; }
+
+  inline size_t RemainingCacheSize() const {
+    size_t remaining = RemainingSize();
+    size_t cache = CACHE_SIZE - m_CacheCurrent;
+    return (remaining < cache) ? remaining : cache;
+  }
+
+  inline bool HasUncached() const {
+    return RemainingSize() > RemainingCacheSize();
+  }
+
+  bool GetIntFromCache(int* result) {
+    CUnpacker Unpacker;
+    Unpacker.Reset(&m_Cache[m_CacheCurrent], RemainingCacheSize());
+
+    *result = Unpacker.GetInt();
+    if (!Unpacker.Error()) {
+      m_CacheCurrent += Unpacker.Size();
+      m_SourceCurrent += Unpacker.Size();
+    }
+    return Unpacker.Error();
+  }
 
  public:
   inline CCkbTapeStream(size_t WitnessIndex, size_t SourceType,
-                        size_t TapeStartOffset, int64_t TapeEndOffset = -1) {
-    m_CurrentOffset = 0;
-    m_pDataSource = (mol2_data_source_t*)m_DataSourceMem;
+                        size_t TapeStartOffset, int64_t TapeEndOffset = -1)
+      : m_SourceCurrent(TapeStartOffset),
+        m_CacheCurrent(0),
+        m_WitnessIndex(WitnessIndex),
+        m_SourceType(SourceType) {
+    size_t SyscallLen = CACHE_SIZE;
+    int err = ckb_load_witness(m_Cache, &SyscallLen, m_SourceCurrent,
+                               m_WitnessIndex, m_SourceType);
+    dbg_assert(err == 0, "loading witness");
 
-    uint64_t SyscallLen = CACHE_SIZE;
-    int err = ckb_load_witness(m_pDataSource->cache, &SyscallLen,
-                               TapeStartOffset, WitnessIndex, SourceType);
-    uint32_t FullWitnessSize = (uint32_t)SyscallLen;
-
-    if (err != 0 || FullWitnessSize <= TapeStartOffset) {
-      m_TotalSize = 0;
-      m_pDataSource->cache_size = 0;
+    if (TapeEndOffset != -1) {
+      m_SourceEnd = TapeEndOffset;
     } else {
-      uint32_t RemainingWitness = FullWitnessSize - TapeStartOffset;
-      if (TapeEndOffset != -1 &&
-          (uint32_t)(TapeEndOffset - TapeStartOffset) < RemainingWitness) {
-        m_TotalSize = (uint32_t)(TapeEndOffset - TapeStartOffset);
-      } else {
-        m_TotalSize = RemainingWitness;
-      }
-      m_pDataSource->start_point = 0;
-      m_pDataSource->cache_size =
-          (m_TotalSize < CACHE_SIZE) ? m_TotalSize : CACHE_SIZE;
+      m_SourceEnd = m_SourceCurrent + SyscallLen;
     }
-
-    m_pDataSource->read = ckb_witness_mol2_read;
-    m_pDataSource->total_size = m_TotalSize;
-    m_pDataSource->args[0] = WitnessIndex;
-    m_pDataSource->args[1] = SourceType;
-    m_pDataSource->args[2] = TapeStartOffset;
-    m_pDataSource->args[3] = 0;
-    m_pDataSource->max_cache_size = CACHE_SIZE;
-
-    m_MolCursor.offset = 0;
-    m_MolCursor.size = m_TotalSize;
-    m_MolCursor.data_source = m_pDataSource;
   }
 
   virtual bool HasData() const override {
-    return m_CurrentOffset < m_TotalSize;
+    return m_SourceCurrent < m_SourceEnd;
   }
 
-  // TODO: rewrite those
-  virtual int ReadRawInt() override {
-    if (m_CurrentOffset + sizeof(int) > m_TotalSize) return 0;
-    int Value = 0;
-    mol2_read_at(&m_MolCursor, m_CurrentOffset, (uint8_t*)&Value, sizeof(int));
-    m_CurrentOffset += sizeof(int);
-    return Value;
-  }
-
-  virtual void PrepareUnpackerChunk(int MaxExpectedBytes) override {
-    uint32_t BytesToRead = MaxExpectedBytes;
-    if (m_CurrentOffset + BytesToRead > m_TotalSize) {
-      BytesToRead = m_TotalSize - m_CurrentOffset;
+  virtual int GetInt() override {
+    int result;
+    bool error = GetIntFromCache(&result);
+    if (!error) {
+      return result;
     }
-    mol2_read_at(&m_MolCursor, m_CurrentOffset, m_pDataSource->cache,
-                 BytesToRead);
-  }
 
-  virtual const uint8_t* CurrentChunkPointer() const override {
-    return m_pDataSource->cache;
-  }
-  virtual void Advance(int BytesConsumed) override {
-    m_CurrentOffset += BytesConsumed;
+    dbg_assert(HasUncached(), "unpack error hints more data to be loaded");
+    // For simplicity, we just reload the still cached few bytes.
+    // Maybe this is also faster than doing memmove.
+    size_t ExpectedLoadSize =
+        RemainingSize() < CACHE_SIZE ? RemainingSize() : CACHE_SIZE;
+    size_t LoadSize = ExpectedLoadSize;
+    int err = ckb_load_witness(m_Cache, &LoadSize, m_SourceCurrent,
+                               m_WitnessIndex, m_SourceType);
+    dbg_assert(err == 0, "loading witness");
+    if (LoadSize > CACHE_SIZE) {
+      LoadSize = CACHE_SIZE;
+    }
+    dbg_assert(ExpectedLoadSize == LoadSize, "loading witness size check");
+    m_CacheCurrent = 0;
+
+    error = GetIntFromCache(&result);
+    dbg_assert(!error, "unpack after loading witness");
+    return result;
   }
 };
 
+#endif  // CKB
 #endif  // __riscv
 
 // ============================================================================
@@ -428,7 +428,7 @@ class CVMContextWrapper : public IGameServer {
   }
 
  protected:
-  virtual void SetKernel(IKernel* pKernel) {
+  virtual void SetKernel(IKernel* pKernel) override {
     IInterface::SetKernel(pKernel);
     m_pRealGame->SetKernel(pKernel);
   }

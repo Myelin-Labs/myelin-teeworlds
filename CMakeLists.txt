@@ -1667,6 +1667,7 @@ endif()
 
 set_src(REPLAYER_RUNNER GLOB src/replayer
   replayer.cpp
+  replayer.h
 )
 
 set(REPLAYER_SRC ${REPLAYER_RUNNER} ${GAME_SERVER} ${GAME_GENERATED_SERVER})

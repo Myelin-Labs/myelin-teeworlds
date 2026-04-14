@@ -6,3 +6,15 @@
 	path = datasrc/maps
 	url = https://github.com/teeworlds/teeworlds-maps.git
 	branch = master
+[submodule "ckb/ckb-c-stdlib"]
+	path = ckb/ckb-c-stdlib
+	url = https://github.com/xxuejie/ckb-c-stdlib
+[submodule "ckb/builtins"]
+	path = ckb/builtins
+	url = https://github.com/nervosnetwork/compiler-rt-builtins-riscv
+[submodule "ckb/libcxx"]
+	path = ckb/libcxx
+	url = https://github.com/xxuejie/ckb-libcxx-builder
+[submodule "ckb/musl"]
+	path = ckb/musl
+	url = https://github.com/xxuejie/musl

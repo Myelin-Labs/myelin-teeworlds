@@ -64,7 +64,7 @@ CMakeSettings*
 CPackConfig.cmake
 CPackSourceConfig.cmake
 Debug
-Makefile
+# Makefile
 RelWithDebInfo
 Release
 _CPack_Packages/
@@ -78,3 +78,5 @@ pack_*/
 rules.ninja
 
 /rust-tools/target/
+/ckb/build/
+/ckb/*.json

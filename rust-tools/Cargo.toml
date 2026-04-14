@@ -1,4 +1,4 @@
 [workspace]
-members = ["crates/map-packer"]
+members = ["ckb-tx-builder","crates/map-packer"]
 
 resolver = "3"
