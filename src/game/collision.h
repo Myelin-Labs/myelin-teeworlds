@@ -25,15 +25,15 @@ public:
 
 	CCollision();
 	void Init(class CLayers *pLayers);
-	bool CheckPoint(float x, float y, int Flag=COLFLAG_SOLID) const { return IsTile(round_to_int(x), round_to_int(y), Flag); }
-	bool CheckPoint(vec2 Pos, int Flag=COLFLAG_SOLID) const { return CheckPoint(Pos.x, Pos.y, Flag); }
-	int GetCollisionAt(float x, float y) const { return GetTile(round_to_int(x), round_to_int(y)); }
+	bool CheckPoint(real_t x, real_t y, int Flag=COLFLAG_SOLID) const { return IsTile(round_to_int(x), round_to_int(y), Flag); }
+	bool CheckPoint(rvec2 Pos, int Flag=COLFLAG_SOLID) const { return CheckPoint(Pos.x, Pos.y, Flag); }
+	int GetCollisionAt(real_t x, real_t y) const { return GetTile(round_to_int(x), round_to_int(y)); }
 	int GetWidth() const { return m_Width; }
 	int GetHeight() const { return m_Height; }
-	int IntersectLine(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision) const;
-	void MovePoint(vec2 *pInoutPos, vec2 *pInoutVel, float Elasticity, int *pBounces) const;
-	void MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, float Elasticity, bool *pDeath=0) const;
-	bool TestBox(vec2 Pos, vec2 Size, int Flag=COLFLAG_SOLID) const;
+	int IntersectLine(rvec2 Pos0, rvec2 Pos1, rvec2 *pOutCollision, rvec2 *pOutBeforeCollision) const;
+	void MovePoint(rvec2 *pInoutPos, rvec2 *pInoutVel, real_t Elasticity, int *pBounces) const;
+	void MoveBox(rvec2 *pInoutPos, rvec2 *pInoutVel, rvec2 Size, real_t Elasticity, bool *pDeath=0) const;
+	bool TestBox(rvec2 Pos, rvec2 Size, int Flag=COLFLAG_SOLID) const;
 };
 
 #endif

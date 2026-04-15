@@ -144,4 +144,25 @@ inline T absolute(T a)
 	return a < T(0) ? -a : a;
 }
 
+#ifdef CONF_FIXED_POINT_MATH
+#include "fpm/fixed.hpp"
+#include "fpm/math.hpp"
+
+typedef fpm::fixed<std::int64_t, __int128_t, 16> fixed_t;
+const fixed_t FIXED_ZERO = fixed_t { 0 };
+const fixed_t FIXED_HALF = fixed_t { 0.5f };
+
+inline fixed_t sign(fixed_t f)
+{
+	return f < FIXED_ZERO ? fixed_t { -1 } : fixed_t { 1 };
+}
+
+inline int round_to_int(fixed_t f)
+{
+	if(f > FIXED_ZERO)
+		return static_cast<int>(f + FIXED_HALF);
+	return static_cast<int>(f - FIXED_HALF);
+}
+#endif
+
 #endif // BASE_MATH_H

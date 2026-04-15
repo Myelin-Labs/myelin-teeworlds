@@ -6,13 +6,13 @@
 #include "character.h"
 #include "projectile.h"
 
-CProjectile::CProjectile(CGameWorld *pGameWorld, int Type, int Owner, vec2 Pos, vec2 Dir, int Span,
-		int Damage, bool Explosive, float Force, int SoundImpact, int Weapon)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE, vec2(round_to_int(Pos.x), round_to_int(Pos.y)))
+CProjectile::CProjectile(CGameWorld *pGameWorld, int Type, int Owner, rvec2 Pos, rvec2 Dir, int Span,
+		int Damage, bool Explosive, real_t Force, int SoundImpact, int Weapon)
+: CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE, rvec2(REAL(round_to_int(Pos.x)), REAL(round_to_int(Pos.y))))
 {
 	m_Type = Type;
-	m_Direction.x = round_to_int(Dir.x*100.0f) / 100.0f;
-	m_Direction.y = round_to_int(Dir.y*100.0f) / 100.0f;
+	m_Direction.x = REAL(round_to_int(Dir.x*REAL(100.0f))) / REAL(100.0f);
+	m_Direction.y = REAL(round_to_int(Dir.y*REAL(100.0f))) / REAL(100.0f);
 	m_LifeSpan = Span;
 	m_Owner = Owner;
 	m_OwnerTeam = GameServer()->m_apPlayers[Owner]->GetTeam();
@@ -39,10 +39,10 @@ void CProjectile::LoseOwner()
 		m_Owner = PLAYER_TEAM_RED;
 }
 
-vec2 CProjectile::GetPos(float Time)
+rvec2 CProjectile::GetPos(real_t Time)
 {
-	float Curvature = 0;
-	float Speed = 0;
+	real_t Curvature = REAL(0);
+	real_t Speed = REAL(0);
 
 	switch(m_Type)
 	{
@@ -68,13 +68,13 @@ vec2 CProjectile::GetPos(float Time)
 
 void CProjectile::Tick()
 {
-	float Pt = (Server()->Tick()-m_StartTick-1)/(float)Server()->TickSpeed();
-	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
-	vec2 PrevPos = GetPos(Pt);
-	vec2 CurPos = GetPos(Ct);
+	real_t Pt = (Server()->Tick()-m_StartTick-1)/REAL(Server()->TickSpeed());
+	real_t Ct = (Server()->Tick()-m_StartTick)/REAL(Server()->TickSpeed());
+	rvec2 PrevPos = GetPos(Pt);
+	rvec2 CurPos = GetPos(Ct);
 	int Collide = GameServer()->Collision()->IntersectLine(PrevPos, CurPos, &CurPos, 0);
 	CCharacter *OwnerChar = GameServer()->GetPlayerChar(m_Owner);
-	CCharacter *TargetChr = GameWorld()->IntersectCharacter(PrevPos, CurPos, 6.0f, CurPos, OwnerChar);
+	CCharacter *TargetChr = GameWorld()->IntersectCharacter(PrevPos, CurPos, REAL(6.0f), CurPos, OwnerChar);
 
 	m_LifeSpan--;
 
@@ -87,7 +87,7 @@ void CProjectile::Tick()
 			GameServer()->CreateExplosion(CurPos, m_Owner, m_Weapon, m_Damage);
 
 		else if(TargetChr)
-			TargetChr->TakeDamage(m_Direction * maximum(0.001f, m_Force), m_Direction*-1, m_Damage, m_Owner, m_Weapon);
+			TargetChr->TakeDamage(m_Direction * maximum(REAL(0.001f), m_Force), m_Direction*REAL(-1), m_Damage, m_Owner, m_Weapon);
 
 		GameWorld()->DestroyEntity(this);
 	}
@@ -102,15 +102,15 @@ void CProjectile::FillInfo(CNetObj_Projectile *pProj)
 {
 	pProj->m_X = round_to_int(m_Pos.x);
 	pProj->m_Y = round_to_int(m_Pos.y);
-	pProj->m_VelX = round_to_int(m_Direction.x*100.0f);
-	pProj->m_VelY = round_to_int(m_Direction.y*100.0f);
+	pProj->m_VelX = round_to_int(m_Direction.x*REAL(100.0f));
+	pProj->m_VelY = round_to_int(m_Direction.y*REAL(100.0f));
 	pProj->m_StartTick = m_StartTick;
 	pProj->m_Type = m_Type;
 }
 
 void CProjectile::Snap(int SnappingClient)
 {
-	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
+	real_t Ct = (Server()->Tick()-m_StartTick)/(real_t)Server()->TickSpeed();
 
 	if(NetworkClipped(SnappingClient, GetPos(Ct)))
 		return;

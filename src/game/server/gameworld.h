@@ -68,7 +68,7 @@ public:
 		Returns:
 			Number of entities found and added to the ents array.
 	*/
-	int FindEntities(vec2 Pos, float Radius, CEntity **ppEnts, int Max, int Type);
+	int FindEntities(rvec2 Pos, real_t Radius, CEntity **ppEnts, int Max, int Type);
 
 	/*
 		Function: closest_CEntity
@@ -83,7 +83,7 @@ public:
 		Returns:
 			Returns a pointer to the closest CEntity or NULL if no CEntity is close enough.
 	*/
-	CEntity *ClosestEntity(vec2 Pos, float Radius, int Type, CEntity *pNotThis);
+	CEntity *ClosestEntity(rvec2 Pos, real_t Radius, int Type, CEntity *pNotThis);
 
 	/*
 		Function: interserct_CCharacter
@@ -99,7 +99,7 @@ public:
 		Returns:
 			Returns a pointer to the closest hit or NULL of there is no intersection.
 	*/
-	class CCharacter *IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, class CEntity *pNotThis = 0);
+	class CCharacter *IntersectCharacter(rvec2 Pos0, rvec2 Pos1, real_t Radius, rvec2 &NewPos, class CEntity *pNotThis = 0);
 
 	/*
 		Function: insert_entity

@@ -7,6 +7,14 @@
 
 #include "math.h"	// mix
 
+#ifdef CONF_FIXED_POINT_MATH
+typedef fixed_t real_t;
+#define REAL(v) (fixed_t { v })
+#else
+typedef float real_t;
+#define REAL(v) ((float) v)
+#endif
+
 // ------------------------------------
 
 template<typename T>
@@ -54,32 +62,20 @@ inline vector2_base<T> rotate(const vector2_base<T> &a, float angle)
 }
 
 template<typename T>
-inline T distance(const vector2_base<T> &a, const vector2_base<T> &b)
-{
-	return length(a - b);
-}
-
-template<typename T>
 inline T dot(const vector2_base<T> &a, const vector2_base<T> &b)
 {
 	return a.x*b.x + a.y*b.y;
-}
-
-template<typename T>
-inline vector2_base<T> closest_point_on_line(vector2_base<T> line_point0, vector2_base<T> line_point1, vector2_base<T> target_point)
-{
-	vector2_base<T> c = target_point - line_point0;
-	vector2_base<T> v = line_point1 - line_point0;
-	v = normalize(v);
-	T d = length(line_point0 - line_point1);
-	T t = dot(v, c)/d;
-	return mix(line_point0, line_point1, clamp(t, (T)0, (T)1));
 }
 
 //
 inline float length(const vector2_base<float> &a)
 {
 	return sqrtf(dot(a, a));
+}
+
+inline float length_approximate(const vector2_base<float> &a)
+{
+  return length(a);
 }
 
 inline float angle(const vector2_base<float> &a)
@@ -97,10 +93,159 @@ inline vector2_base<float> direction(float angle)
 	return vector2_base<float>(cosf(angle), sinf(angle));
 }
 
+inline float power(float x, float y)
+{
+  return powf(x, y);
+}
+
+inline float cosine(float x)
+{
+  return cosf(x);
+}
+
+inline float sine(float x)
+{
+  return sinf(x);
+}
+
+inline float division(float x, float y)
+{
+  return x / y;
+}
+
+#ifdef CONF_FIXED_POINT_MATH
+inline vector2_base<fixed_t> rotate(const vector2_base<fixed_t> &a, fixed_t angle)
+{
+  angle = angle * fixed_t::pi() / fixed_t { 180.0f };
+	fixed_t s = fpm::sin(angle);
+	fixed_t c = fpm::cos(angle);
+	return vector2_base<fixed_t>(c*a.x - s*a.y, s*a.x + c*a.y);
+}
+
+/**
+ * Approximates the Euclidean distance using Alpha=1, Beta=0.375.
+ * Max error: +6.8% / -1.5%.
+ * * This is optimized for environments where sqrt and division are costly.
+ * It uses raw bitwise shifts to perform the 0.375 (3/8) multiplication.
+ * See https://en.wikipedia.org/wiki/Alpha_max_plus_beta_min_algorithm
+ */
+inline fixed_t length_approximate(const vector2_base<fixed_t> &a)
+{
+  fixed_t x = fpm::abs(a.x);
+  fixed_t y = fpm::abs(a.y);
+
+  if (x < y) {
+    std::swap(x, y);
+  }
+
+  auto raw_max = maximum(x, y).raw_value();
+  auto raw_min = minimum(x, y).raw_value();
+
+  // Beta = 0.375 = 3/8 = (1/4 + 1/8)
+  // (raw_min >> 2) is 0.25 * min
+  // (raw_min >> 3) is 0.125 * min
+  auto raw_dist = raw_max + (raw_min >> 2) + (raw_min >> 3);
+
+  return fixed_t::from_raw_value(raw_dist);
+}
+
+/*
+ * After some testing, a full approximated version is fine from game experience,
+ * we are switching to approximation of dot length here. This saves us ~47 million cycles.
+ */
+inline fixed_t length(const vector2_base<fixed_t> &a)
+{
+  // More precise version
+  // return fpm::sqrt(dot(a, a));
+	return length_approximate(a);
+}
+
+inline fixed_t angle(const vector2_base<fixed_t> &a)
+{
+  if ((a.x == REAL(0)) && (a.y == REAL(0))) {
+    return REAL(0);
+  }
+	return fpm::atan2(a.y, a.x);
+}
+
+inline vector2_base<fixed_t> normalize(const vector2_base<fixed_t> &v)
+{
+  fixed_t l = length(v);
+  if (l != REAL(0)) {
+    return v / l;
+  }
+  return vector2_base<fixed_t>(REAL(0), REAL(0));
+}
+
+inline vector2_base<fixed_t> direction(fixed_t angle)
+{
+	return vector2_base<fixed_t>(fpm::cos(angle), fpm::sin(angle));
+}
+
+inline fixed_t power(fixed_t x, fixed_t y)
+{
+  return fpm::pow(x, y);
+}
+
+inline fixed_t cosine(fixed_t x)
+{
+  return fpm::cos(x);
+}
+
+inline fixed_t sine(fixed_t x)
+{
+  return fpm::sin(x);
+}
+
+inline fixed_t division(fixed_t x, fixed_t y)
+{
+  if (y == REAL(0)) {
+    return REAL(0);
+  }
+  return x / y;
+}
+#endif
+
+inline real_t random_real()
+{
+  return REAL(vm_rand()) / REAL(RAND_MAX);
+}
+
+typedef vector2_base<real_t> rvec2;
 typedef vector2_base<float> vec2;
 typedef vector2_base<bool> bvec2;
 typedef vector2_base<int> ivec2;
 
+inline rvec2 fvec2_to_rvec2(vec2 v) {
+  return rvec2(REAL(v.x), REAL(v.y));
+}
+
+inline vec2 rvec2_to_fvec2(rvec2 v) {
+  return vec2(static_cast<float>(v.x), static_cast<float>(v.y));
+}
+
+template<typename T>
+inline T distance(const vector2_base<T> &a, const vector2_base<T> &b)
+{
+	return length(a - b);
+}
+
+template<typename T>
+inline T distance_approximate(const vector2_base<T> &a, const vector2_base<T> &b)
+{
+	return length_approximate(a - b);
+}
+
+template<typename T>
+inline vector2_base<T> closest_point_on_line(vector2_base<T> line_point0, vector2_base<T> line_point1, vector2_base<T> target_point)
+{
+	vector2_base<T> c = target_point - line_point0;
+	vector2_base<T> v = line_point1 - line_point0;
+	v = normalize(v);
+	T d = length(line_point0 - line_point1);
+	T t = division(dot(v, c), d);
+	return mix(line_point0, line_point1, clamp(t, (T)0, (T)1));
+}
 
 // ------------------------------------
 template<typename T>

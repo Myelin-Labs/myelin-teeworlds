@@ -6,7 +6,7 @@
 #include "character.h"
 #include "flag.h"
 
-CFlag::CFlag(CGameWorld *pGameWorld, int Team, vec2 StandPos)
+CFlag::CFlag(CGameWorld *pGameWorld, int Team, rvec2 StandPos)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_FLAG, StandPos, ms_PhysSize)
 {
 	m_Team = Team;
@@ -22,7 +22,7 @@ void CFlag::Reset()
 	m_pCarrier = 0;
 	m_AtStand = true;
 	m_Pos = m_StandPos;
-	m_Vel = vec2(0, 0);
+	m_Vel = rvec2(REAL(0), REAL(0));
 	m_GrabTick = 0;
 }
 
@@ -37,7 +37,7 @@ void CFlag::Grab(CCharacter *pChar)
 void CFlag::Drop()
 {
 	m_pCarrier = 0;
-	m_Vel = vec2(0, 0);
+	m_Vel = rvec2(REAL(0), REAL(0));
 	m_DropTick = Server()->Tick();
 }
 
@@ -68,7 +68,7 @@ void CFlag::TickDefered()
 			else
 			{
 				m_Vel.y += GameWorld()->m_Core.m_Tuning.m_Gravity;
-				GameServer()->Collision()->MoveBox(&m_Pos, &m_Vel, vec2(ms_PhysSize, ms_PhysSize), 0.5f);
+				GameServer()->Collision()->MoveBox(&m_Pos, &m_Vel, rvec2(REAL(ms_PhysSize), REAL(ms_PhysSize)), REAL(0.5f));
 			}
 		}
 	}

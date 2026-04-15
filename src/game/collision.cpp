@@ -65,15 +65,15 @@ bool CCollision::IsTile(int x, int y, int Flag) const
 }
 
 // TODO: rewrite this smarter!
-int CCollision::IntersectLine(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision) const
+int CCollision::IntersectLine(rvec2 Pos0, rvec2 Pos1, rvec2 *pOutCollision, rvec2 *pOutBeforeCollision) const
 {
-	const int End = distance(Pos0, Pos1)+1;
-	const float InverseEnd = 1.0f/End;
-	vec2 Last = Pos0;
+	const int End = static_cast<int>(distance_approximate(Pos0, Pos1)+1);
+	const real_t InverseEnd = REAL(1.0f)/End;
+	rvec2 Last = Pos0;
 
 	for(int i = 0; i <= End; i++)
 	{
-		vec2 Pos = mix(Pos0, Pos1, i*InverseEnd);
+		rvec2 Pos = mix(Pos0, Pos1, i*InverseEnd);
 		if(CheckPoint(Pos.x, Pos.y))
 		{
 			if(pOutCollision)
@@ -92,13 +92,13 @@ int CCollision::IntersectLine(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *p
 }
 
 // TODO: OPT: rewrite this smarter!
-void CCollision::MovePoint(vec2 *pInoutPos, vec2 *pInoutVel, float Elasticity, int *pBounces) const
+void CCollision::MovePoint(rvec2 *pInoutPos, rvec2 *pInoutVel, real_t Elasticity, int *pBounces) const
 {
 	if(pBounces)
 		*pBounces = 0;
 
-	vec2 Pos = *pInoutPos;
-	vec2 Vel = *pInoutVel;
+	rvec2 Pos = *pInoutPos;
+	rvec2 Vel = *pInoutVel;
 	if(CheckPoint(Pos + Vel))
 	{
 		int Affected = 0;
@@ -130,58 +130,65 @@ void CCollision::MovePoint(vec2 *pInoutPos, vec2 *pInoutVel, float Elasticity, i
 	}
 }
 
-bool CCollision::TestBox(vec2 Pos, vec2 Size, int Flag) const
+// Optimized TestBox implementation written by Gemini
+bool CCollision::TestBox(rvec2 Pos, rvec2 Size, int Flag) const
 {
-	Size *= 0.5f;
-	if(CheckPoint(Pos.x-Size.x, Pos.y-Size.y, Flag))
-		return true;
-	if(CheckPoint(Pos.x+Size.x, Pos.y-Size.y, Flag))
-		return true;
-	if(CheckPoint(Pos.x-Size.x, Pos.y+Size.y, Flag))
-		return true;
-	if(CheckPoint(Pos.x+Size.x, Pos.y+Size.y, Flag))
-		return true;
-	return false;
+  rvec2 HalfSize = rvec2(Size.x / REAL(2.0), Size.y / REAL(2.0));
+
+  // Calculate the 4 absolute corners
+  int x1 = round_to_int(Pos.x - HalfSize.x);
+  int x2 = round_to_int(Pos.x + HalfSize.x);
+  int y1 = round_to_int(Pos.y - HalfSize.y);
+  int y2 = round_to_int(Pos.y + HalfSize.y);
+
+  // Check ONLY the 4 corners directly via IsTile.
+  // Skipping CheckPoint avoids redundant float multiplication/division inside the engine.
+  if(IsTile(x1, y1, Flag)) return true;
+  if(IsTile(x2, y1, Flag)) return true;
+  if(IsTile(x1, y2, Flag)) return true;
+  if(IsTile(x2, y2, Flag)) return true;
+
+  return false;
 }
 
-void CCollision::MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, float Elasticity, bool *pDeath) const
+void CCollision::MoveBox(rvec2 *pInoutPos, rvec2 *pInoutVel, rvec2 Size, real_t Elasticity, bool *pDeath) const
 {
 	// do the move
-	vec2 Pos = *pInoutPos;
-	vec2 Vel = *pInoutVel;
+	rvec2 Pos = *pInoutPos;
+	rvec2 Vel = *pInoutVel;
 
-	const float Distance = length(Vel);
+	const real_t Distance = length(Vel);
 	const int Max = (int)Distance;
 
 	if(pDeath)
 		*pDeath = false;
 
-	if(Distance > 0.00001f)
+	if(Distance > REAL(0.00001f))
 	{
-		const float Fraction = 1.0f/(Max+1);
+		const real_t Fraction = REAL(1.0f)/(Max+1);
 		for(int i = 0; i <= Max; i++)
 		{
-			vec2 NewPos = Pos + Vel*Fraction; // TODO: this row is not nice
+			rvec2 NewPos = Pos + Vel*Fraction; // TODO: this row is not nice
 
 			//You hit a deathtile, congrats to that :)
 			//Deathtiles are a bit smaller
-			if(pDeath && TestBox(vec2(NewPos.x, NewPos.y), Size*(2.0f/3.0f), COLFLAG_DEATH))
+			if(pDeath && TestBox(rvec2(NewPos.x, NewPos.y), Size*REAL(2.0f/3.0f), COLFLAG_DEATH))
 			{
 				*pDeath = true;
 			}
 
-			if(TestBox(vec2(NewPos.x, NewPos.y), Size))
+			if(TestBox(rvec2(NewPos.x, NewPos.y), Size))
 			{
 				int Hits = 0;
 
-				if(TestBox(vec2(Pos.x, NewPos.y), Size))
+				if(TestBox(rvec2(Pos.x, NewPos.y), Size))
 				{
 					NewPos.y = Pos.y;
 					Vel.y *= -Elasticity;
 					Hits++;
 				}
 
-				if(TestBox(vec2(NewPos.x, Pos.y), Size))
+				if(TestBox(rvec2(NewPos.x, Pos.y), Size))
 				{
 					NewPos.x = Pos.x;
 					Vel.x *= -Elasticity;

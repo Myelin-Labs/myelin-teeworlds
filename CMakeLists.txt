@@ -2160,6 +2160,8 @@ foreach(target ${TARGETS_OWN})
   if(HEADLESS_CLIENT)
     target_compile_definitions(${target} PRIVATE CONF_HEADLESS_CLIENT)
   endif()
+  # Use fixed point math for game logic calculation
+  target_compile_definitions(${target} PRIVATE CONF_FIXED_POINT_MATH)
 endforeach()
 
 foreach(target ${TARGETS_DEP})

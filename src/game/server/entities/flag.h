@@ -10,12 +10,12 @@ class CFlag : public CEntity
 private:
 	/* Identity */
 	int m_Team;
-	vec2 m_StandPos;
+	rvec2 m_StandPos;
 
 	/* State */
 	bool m_AtStand;
 	CCharacter *m_pCarrier;
-	vec2 m_Vel;
+	rvec2 m_Vel;
 	int m_GrabTick;
 	int m_DropTick;
 
@@ -24,7 +24,7 @@ public:
 	static int const ms_PhysSize = 14;
 
 	/* Constructor */
-	CFlag(CGameWorld *pGameWorld, int Team, vec2 StandPos);
+	CFlag(CGameWorld *pGameWorld, int Team, rvec2 StandPos);
 
 	/* Getters */
 	int GetTeam() const				{ return m_Team; }

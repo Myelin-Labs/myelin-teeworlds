@@ -80,3 +80,4 @@ rules.ninja
 /rust-tools/target/
 /ckb/build/
 /ckb/*.json
+/ckb/flame*

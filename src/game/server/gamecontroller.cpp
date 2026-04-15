@@ -162,16 +162,16 @@ void IGameController::DoTeamBalance()
 
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", "Balancing teams");
 
-	float aTeamScore[NUM_TEAMS] = {0};
-	float aPlayerScore[MAX_CLIENTS] = {0.0f};
+	real_t aTeamScore[NUM_TEAMS] = {REAL(0)};
+	real_t aPlayerScore[MAX_CLIENTS] = {REAL(0.0f)};
 
 	// gather stats
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS)
 		{
-			aPlayerScore[i] = GameServer()->m_apPlayers[i]->m_Score*Server()->TickSpeed()*60.0f/
-				(Server()->Tick()-GameServer()->m_apPlayers[i]->m_ScoreStartTick);
+			aPlayerScore[i] = REAL(GameServer()->m_apPlayers[i]->m_Score*Server()->TickSpeed())*REAL(60.0f)/
+				REAL(Server()->Tick()-GameServer()->m_apPlayers[i]->m_ScoreStartTick);
 			aTeamScore[GameServer()->m_apPlayers[i]->GetTeam()] += aPlayerScore[i];
 		}
 	}
@@ -183,7 +183,7 @@ void IGameController::DoTeamBalance()
 	do
 	{
 		CPlayer *pPlayer = 0;
-		float ScoreDiff = aTeamScore[BiggerTeam];
+		real_t ScoreDiff = aTeamScore[BiggerTeam];
 		for(int i = 0; i < MAX_CLIENTS; i++)
 		{
 			if(!GameServer()->m_apPlayers[i] || !CanBeMovedOnBalance(i))
@@ -258,7 +258,7 @@ void IGameController::OnFlagReturn(CFlag *pFlag)
 {
 }
 
-bool IGameController::OnEntity(int Index, vec2 Pos)
+bool IGameController::OnEntity(int Index, rvec2 Pos)
 {
 	// don't add pickups in survival
 	if(m_GameFlags&GAMEFLAG_SURVIVAL)
@@ -1007,7 +1007,7 @@ void IGameController::CycleMap()
 }
 
 // spawn
-bool IGameController::CanSpawn(int Team, vec2 *pOutPos) const
+bool IGameController::CanSpawn(int Team, rvec2 *pOutPos) const
 {
 	// spectators can't spawn
 	if(Team == TEAM_SPECTATORS || GameServer()->m_World.m_Paused || GameServer()->m_World.m_ResetRequested)
@@ -1040,19 +1040,19 @@ bool IGameController::CanSpawn(int Team, vec2 *pOutPos) const
 	return Eval.m_Got;
 }
 
-float IGameController::EvaluateSpawnPos(CSpawnEval *pEval, vec2 Pos) const
+real_t IGameController::EvaluateSpawnPos(CSpawnEval *pEval, rvec2 Pos) const
 {
-	float Score = 0.0f;
+	real_t Score = REAL(0.0f);
 	CCharacter *pC = static_cast<CCharacter *>(GameServer()->m_World.FindFirst(CGameWorld::ENTTYPE_CHARACTER));
 	for(; pC; pC = (CCharacter *)pC->TypeNext())
 	{
 		// team mates are not as dangerous as enemies
-		float Scoremod = 1.0f;
+		real_t Scoremod = REAL(1.0f);
 		if(pEval->m_FriendlyTeam != -1 && pC->GetPlayer()->GetTeam() == pEval->m_FriendlyTeam)
-			Scoremod = 0.5f;
+			Scoremod = REAL(0.5f);
 
-		float d = distance(Pos, pC->GetPos());
-		Score += Scoremod * (d == 0 ? 1000000000.0f : 1.0f/d);
+		real_t d = distance(Pos, pC->GetPos());
+		Score += Scoremod * (d == REAL(0) ? REAL(1000000000.0f) : REAL(1.0f)/d);
 	}
 
 	return Score;
@@ -1065,8 +1065,14 @@ void IGameController::EvaluateSpawnType(CSpawnEval *pEval, int Type) const
 	{
 		// check if the position is occupado
 		CCharacter *aEnts[MAX_CLIENTS];
-		int Num = GameServer()->m_World.FindEntities(m_aaSpawnPoints[Type][i], 64, (CEntity**)aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
-		vec2 Positions[5] = { vec2(0.0f, 0.0f), vec2(-32.0f, 0.0f), vec2(0.0f, -32.0f), vec2(32.0f, 0.0f), vec2(0.0f, 32.0f) };	// start, left, up, right, down
+		int Num = GameServer()->m_World.FindEntities(m_aaSpawnPoints[Type][i], REAL(64), (CEntity**)aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+		rvec2 Positions[5] = {
+  		rvec2(REAL(0.0f), REAL(0.0f)),
+  		rvec2(REAL(-32.0f), REAL(0.0f)),
+  		rvec2(REAL(0.0f), REAL(-32.0f)),
+  		rvec2(REAL(32.0f), REAL(0.0f)),
+  		rvec2(REAL(0.0f), REAL(32.0f))
+  	};	// start, left, up, right, down
 		int Result = -1;
 		for(int Index = 0; Index < 5 && Result == -1; ++Index)
 		{
@@ -1082,8 +1088,8 @@ void IGameController::EvaluateSpawnType(CSpawnEval *pEval, int Type) const
 		if(Result == -1)
 			continue;	// try next spawn point
 
-		vec2 P = m_aaSpawnPoints[Type][i]+Positions[Result];
-		float S = pEval->m_RandomSpawn ? (Result + random_float()) : EvaluateSpawnPos(pEval, P);
+		rvec2 P = m_aaSpawnPoints[Type][i]+Positions[Result];
+		real_t S = pEval->m_RandomSpawn ? (Result + random_real()) : EvaluateSpawnPos(pEval, P);
 		if(!pEval->m_Got || pEval->m_Score > S)
 		{
 			pEval->m_Got = true;

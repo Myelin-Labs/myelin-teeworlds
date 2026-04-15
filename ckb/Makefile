@@ -17,11 +17,8 @@ DEBUG := false
 REORDER_STACK := true
 
 BASE_CFLAGS := --target=riscv64 -march=rv64imc_zba_zbb_zbc_zbs \
-	-Os -DCKB \
-	-fdata-sections -ffunction-sections -fvisibility=hidden \
-	-I $(TEEWORLDS)/src -I $(TEEWORLDS)/build/src \
-	-I $(TEEWORLDS)/src/engine/external/zlib \
-	-I $(CKB_STDLIB) -I $(CKB_STDLIB)/molecule
+	-Os -g -DCKB -DCONF_FIXED_POINT_MATH \
+	-fdata-sections -ffunction-sections -fvisibility=hidden
 
 LDFLAGS := --gc-sections --static \
   --nostdlib --sysroot $(MUSL)/release \
@@ -35,20 +32,26 @@ ifeq (true,$(REORDER_STACK))
 	LDFLAGS += -Tld_interface.ld
 endif
 
-CFLAGS := -g \
+CFLAGS := \
   -Wall -Werror \
   -Wno-unused-function \
   -nostdinc \
   -isystem $(MUSL)/release/include \
+	-I $(TEEWORLDS)/src -I $(TEEWORLDS)/build/src \
+	-I $(TEEWORLDS)/src/engine/external/zlib \
+	-I $(CKB_STDLIB) -I $(CKB_STDLIB)/molecule \
   $(BASE_CFLAGS)
 
-CXXFLAGS := -g \
+CXXFLAGS := \
   -Wall -Werror \
   -std=c++20 \
   -D_GNU_SOURCE \
   -nostdinc -nostdinc++ \
   -isystem $(LIBCXX)/release/include/c++/v1 \
   -isystem $(MUSL)/release/include \
+	-I $(TEEWORLDS)/src -I $(TEEWORLDS)/build/src \
+	-I $(TEEWORLDS)/src/engine/external/zlib \
+	-I $(CKB_STDLIB) -I $(CKB_STDLIB)/molecule \
   $(BASE_CFLAGS)
 ifneq (true,$(DEBUG))
 	CXXFLAGS += -DNO_DEBUG_INFO

@@ -18,9 +18,10 @@ class CTuneParam
 public:
 	void Set(int v) { m_Value = v; }
 	int Get() const { return m_Value; }
-	CTuneParam &operator = (int v) { m_Value = (int)(v*100.0f); return *this; }
-	CTuneParam &operator = (float v) { m_Value = (int)(v*100.0f); return *this; }
-	operator float() const { return m_Value/100.0f; }
+	CTuneParam &operator = (int v) { m_Value = v*100; return *this; }
+	CTuneParam &operator = (real_t v) { m_Value = static_cast<int>(v*REAL(100.0f)); return *this; }
+	operator real_t() const { return m_Value / REAL(100.0f); }
+	operator bool() const { return m_Value != 0; }
 };
 
 class CTuningParams
@@ -29,8 +30,8 @@ class CTuningParams
 public:
 	CTuningParams()
 	{
-		const float TicksPerSecond = 50.0f;
-		#define MACRO_TUNING_PARAM(Name,ScriptName,Value) m_##Name.Set((int)(Value*100.0f));
+		const real_t TicksPerSecond = REAL(50.0f);
+		#define MACRO_TUNING_PARAM(Name,ScriptName,Value) m_##Name.Set(static_cast<int>(Value*REAL(100.0f)));
 		#include "tuning.h"
 		#undef MACRO_TUNING_PARAM
 	}
@@ -40,10 +41,10 @@ public:
 	#undef MACRO_TUNING_PARAM
 
 	static int Num() { return sizeof(CTuningParams)/sizeof(CTuneParam); }
-	bool Set(int Index, float Value);
-	bool Set(const char *pName, float Value);
-	bool Get(int Index, float *pValue) const;
-	bool Get(const char *pName, float *pValue) const;
+	bool Set(int Index, real_t Value);
+	bool Set(const char *pName, real_t Value);
+	bool Get(int Index, real_t *pValue) const;
+	bool Get(const char *pName, real_t *pValue) const;
 	const char *GetName(int Index) const { return s_apNames[Index]; }
 	int PossibleTunings(const char *pStr, IConsole::FPossibleCallback pfnCallback = IConsole::EmptyPossibleCommandCallback, void *pUser = 0);
 };
@@ -84,9 +85,9 @@ inline void IntsToStr(const int *pInts, int Num, char *pStr)
 
 
 
-inline vec2 CalcPos(vec2 Pos, vec2 Velocity, float Curvature, float Speed, float Time)
+inline rvec2 CalcPos(rvec2 Pos, rvec2 Velocity, real_t Curvature, real_t Speed, real_t Time)
 {
-	vec2 n;
+	rvec2 n;
 	Time *= Speed;
 	n.x = Pos.x + Velocity.x*Time;
 	n.y = Pos.y + Velocity.y*Time + Curvature/10000*(Time*Time);
@@ -97,7 +98,7 @@ inline vec2 CalcPos(vec2 Pos, vec2 Velocity, float Curvature, float Speed, float
 template<typename T>
 inline T SaturatedAdd(T Min, T Max, T Current, T Modifier)
 {
-	if(Modifier < 0)
+	if(Modifier < REAL(0))
 	{
 		if(Current < Min)
 			return Current;
@@ -118,7 +119,7 @@ inline T SaturatedAdd(T Min, T Max, T Current, T Modifier)
 }
 
 
-float VelocityRamp(float Value, float Start, float Range, float Curvature);
+real_t VelocityRamp(real_t Value, real_t Start, real_t Range, real_t Curvature);
 
 // hooking stuff
 enum
@@ -148,14 +149,14 @@ class CCharacterCore
 	CWorldCore *m_pWorld;
 	CCollision *m_pCollision;
 public:
-	static const float PHYS_SIZE;
-	vec2 m_Pos;
-	vec2 m_Vel;
+	static const real_t PHYS_SIZE;
+	rvec2 m_Pos;
+	rvec2 m_Vel;
 
-	vec2 m_HookDragVel;
+	rvec2 m_HookDragVel;
 
-	vec2 m_HookPos;
-	vec2 m_HookDir;
+	rvec2 m_HookPos;
+	rvec2 m_HookDir;
 	int m_HookTick;
 	int m_HookState;
 	int m_HookedPlayer;

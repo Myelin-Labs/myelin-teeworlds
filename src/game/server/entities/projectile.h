@@ -14,10 +14,10 @@ enum
 class CProjectile : public CEntity
 {
 public:
-	CProjectile(CGameWorld *pGameWorld, int Type, int Owner, vec2 Pos, vec2 Dir, int Span,
-		int Damage, bool Explosive, float Force, int SoundImpact, int Weapon);
+	CProjectile(CGameWorld *pGameWorld, int Type, int Owner, rvec2 Pos, rvec2 Dir, int Span,
+		int Damage, bool Explosive, real_t Force, int SoundImpact, int Weapon);
 
-	vec2 GetPos(float Time);
+	rvec2 GetPos(real_t Time);
 	void FillInfo(CNetObj_Projectile *pProj);
 
 	int GetOwner() const { return m_Owner; }
@@ -29,7 +29,7 @@ public:
 	virtual void Snap(int SnappingClient);
 
 private:
-	vec2 m_Direction;
+	rvec2 m_Direction;
 	int m_LifeSpan;
 	int m_Owner;
 	int m_OwnerTeam;
@@ -37,7 +37,7 @@ private:
 	int m_Damage;
 	int m_SoundImpact;
 	int m_Weapon;
-	float m_Force;
+  real_t m_Force;
 	int m_StartTick;
 	bool m_Explosive;
 };

@@ -93,9 +93,11 @@ void CParticles::Update(float TimePassed)
 				m_aParticles[i].m_Vel *= m_aParticles[i].m_Friction;
 
 			// move the point
-			vec2 Vel = m_aParticles[i].m_Vel*TimePassed;
-			Collision()->MovePoint(&m_aParticles[i].m_Pos, &Vel, 0.1f+0.9f*random_float(), NULL);
-			m_aParticles[i].m_Vel = Vel* (1.0f/TimePassed);
+			rvec2 Pos = fvec2_to_rvec2(m_aParticles[i].m_Pos);
+			vec2 Velf = m_aParticles[i].m_Vel*TimePassed;
+			rvec2 Vel = fvec2_to_rvec2(Velf);
+			Collision()->MovePoint(&Pos, &Vel, REAL(0.1f+0.9f*random_float()), NULL);
+			m_aParticles[i].m_Vel = Velf * (1.0f/TimePassed);
 
 			m_aParticles[i].m_Life += TimePassed;
 			m_aParticles[i].m_Rot += TimePassed * m_aParticles[i].m_Rotspeed;

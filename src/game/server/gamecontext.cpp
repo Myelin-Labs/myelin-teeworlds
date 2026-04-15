@@ -95,23 +95,23 @@ class CCharacter *CGameContext::GetPlayerChar(int ClientID)
 	return m_apPlayers[ClientID]->GetCharacter();
 }
 
-void CGameContext::CreateDamage(vec2 Pos, int Id, vec2 Source, int HealthAmount, int ArmorAmount, bool Self)
+void CGameContext::CreateDamage(rvec2 Pos, int Id, rvec2 Source, int HealthAmount, int ArmorAmount, bool Self)
 {
-	float f = angle(Source);
+	real_t f = angle(Source);
 	CNetEvent_Damage *pEvent = (CNetEvent_Damage *)m_Events.Create(NETEVENTTYPE_DAMAGE, sizeof(CNetEvent_Damage));
 	if(pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
 		pEvent->m_Y = (int)Pos.y;
 		pEvent->m_ClientID = Id;
-		pEvent->m_Angle = (int)(f*256.0f);
+		pEvent->m_Angle = static_cast<int>(f*REAL(256.0f));
 		pEvent->m_HealthAmount = HealthAmount;
 		pEvent->m_ArmorAmount = ArmorAmount;
 		pEvent->m_Self = Self;
 	}
 }
 
-void CGameContext::CreateHammerHit(vec2 Pos)
+void CGameContext::CreateHammerHit(rvec2 Pos)
 {
 	// create the event
 	CNetEvent_HammerHit *pEvent = (CNetEvent_HammerHit *)m_Events.Create(NETEVENTTYPE_HAMMERHIT, sizeof(CNetEvent_HammerHit));
@@ -123,7 +123,7 @@ void CGameContext::CreateHammerHit(vec2 Pos)
 }
 
 
-void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, int MaxDamage)
+void CGameContext::CreateExplosion(rvec2 Pos, int Owner, int Weapon, int MaxDamage)
 {
 	// create the event
 	CNetEvent_Explosion *pEvent = (CNetEvent_Explosion *)m_Events.Create(NETEVENTTYPE_EXPLOSION, sizeof(CNetEvent_Explosion));
@@ -135,24 +135,24 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, int MaxDamag
 
 	// deal damage
 	CCharacter *apEnts[MAX_CLIENTS];
-	float Radius = g_pData->m_Explosion.m_Radius;
-	float InnerRadius = 48.0f;
-	float MaxForce = g_pData->m_Explosion.m_MaxForce;
+	real_t Radius = REAL(g_pData->m_Explosion.m_Radius);
+	real_t InnerRadius = REAL(48.0f);
+	real_t MaxForce = REAL(g_pData->m_Explosion.m_MaxForce);
 	int Num = m_World.FindEntities(Pos, Radius, (CEntity**)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 	for(int i = 0; i < Num; i++)
 	{
-		vec2 Diff = apEnts[i]->GetPos() - Pos;
-		vec2 Force(0, MaxForce);
-		float l = length(Diff);
+		rvec2 Diff = apEnts[i]->GetPos() - Pos;
+		rvec2 Force(REAL(0), MaxForce);
+		real_t l = length(Diff);
 		if(l)
 			Force = normalize(Diff) * MaxForce;
-		float Factor = 1 - clamp((l-InnerRadius)/(Radius-InnerRadius), 0.0f, 1.0f);
+		real_t Factor = 1 - clamp((l-InnerRadius)/(Radius-InnerRadius), REAL(0.0f), REAL(1.0f));
 		if((int)(Factor * MaxDamage))
-			apEnts[i]->TakeDamage(Force * Factor, Diff*-1, (int)(Factor * MaxDamage), Owner, Weapon);
+			apEnts[i]->TakeDamage(Force * Factor, Diff*REAL(-1), (int)(Factor * MaxDamage), Owner, Weapon);
 	}
 }
 
-void CGameContext::CreatePlayerSpawn(vec2 Pos)
+void CGameContext::CreatePlayerSpawn(rvec2 Pos)
 {
 	// create the event
 	CNetEvent_Spawn *ev = (CNetEvent_Spawn *)m_Events.Create(NETEVENTTYPE_SPAWN, sizeof(CNetEvent_Spawn));
@@ -163,7 +163,7 @@ void CGameContext::CreatePlayerSpawn(vec2 Pos)
 	}
 }
 
-void CGameContext::CreateDeath(vec2 Pos, int ClientID)
+void CGameContext::CreateDeath(rvec2 Pos, int ClientID)
 {
 	// create the event
 	CNetEvent_Death *pEvent = (CNetEvent_Death *)m_Events.Create(NETEVENTTYPE_DEATH, sizeof(CNetEvent_Death));
@@ -175,7 +175,7 @@ void CGameContext::CreateDeath(vec2 Pos, int ClientID)
 	}
 }
 
-void CGameContext::CreateSound(vec2 Pos, int Sound, int64 Mask)
+void CGameContext::CreateSound(rvec2 Pos, int Sound, int64 Mask)
 {
 	if (Sound < 0)
 		return;
@@ -1178,10 +1178,10 @@ void CGameContext::ConTuneParam(IConsole::IResult *pResult, void *pUserData)
 	char aBuf[256];
 	if(pResult->NumArguments() == 2)
 	{
-		float NewValue = pResult->GetFloat(1);
+		real_t NewValue = REAL(pResult->GetFloat(1));
 		if(pSelf->Tuning()->Set(pParamName, NewValue) && pSelf->Tuning()->Get(pParamName, &NewValue))
 		{
-			str_format(aBuf, sizeof(aBuf), "%s changed to %.2f", pParamName, NewValue);
+			str_format(aBuf, sizeof(aBuf), "%s changed to %.2f", pParamName, static_cast<float>(NewValue));
 			pSelf->SendTuningParams(-1);
 		}
 		else
@@ -1191,10 +1191,10 @@ void CGameContext::ConTuneParam(IConsole::IResult *pResult, void *pUserData)
 	}
 	else
 	{
-		float Value;
+		real_t Value;
 		if(pSelf->Tuning()->Get(pParamName, &Value))
 		{
-			str_format(aBuf, sizeof(aBuf), "%s %.2f", pParamName, Value);
+			str_format(aBuf, sizeof(aBuf), "%s %.2f", pParamName, static_cast<float>(Value));
 		}
 		else
 		{
@@ -1212,11 +1212,11 @@ void CGameContext::ConTuneReset(IConsole::IResult *pResult, void *pUserData)
 	if(pResult->NumArguments())
 	{
 		const char *pParamName = pResult->GetString(0);
-		float DefaultValue = 0.0f;
+		real_t DefaultValue = REAL(0.0f);
 		char aBuf[256];
 		if(TuningParams.Get(pParamName, &DefaultValue) && pSelf->Tuning()->Set(pParamName, DefaultValue))
 		{
-			str_format(aBuf, sizeof(aBuf), "%s reset to %.2f", pParamName, DefaultValue);
+			str_format(aBuf, sizeof(aBuf), "%s reset to %.2f", pParamName, static_cast<float>(DefaultValue));
 			pSelf->SendTuningParams(-1);
 		}
 		else
@@ -1239,9 +1239,9 @@ void CGameContext::ConTunes(IConsole::IResult *pResult, void *pUserData)
 	char aBuf[256];
 	for(int i = 0; i < pSelf->Tuning()->Num(); i++)
 	{
-		float Value;
+		real_t Value;
 		pSelf->Tuning()->Get(i, &Value);
-		str_format(aBuf, sizeof(aBuf), "%s %.2f", pSelf->Tuning()->GetName(i), Value);
+		str_format(aBuf, sizeof(aBuf), "%s %.2f", pSelf->Tuning()->GetName(i), static_cast<float>(Value));
 		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "tuning", aBuf);
 	}
 }
@@ -1642,7 +1642,7 @@ void CGameContext::OnInit()
 
 			if(Index >= ENTITY_OFFSET)
 			{
-				vec2 Pos(x*32.0f+16.0f, y*32.0f+16.0f);
+				rvec2 Pos(REAL(x)*REAL(32.0f)+REAL(16.0f), REAL(y)*REAL(32.0f)+REAL(16.0f));
 				m_pController->OnEntity(Index-ENTITY_OFFSET, Pos);
 			}
 		}

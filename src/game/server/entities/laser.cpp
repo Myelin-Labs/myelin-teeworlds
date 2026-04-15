@@ -6,7 +6,7 @@
 #include "character.h"
 #include "laser.h"
 
-CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner)
+CLaser::CLaser(CGameWorld *pGameWorld, rvec2 Pos, rvec2 Direction, real_t StartEnergy, int Owner)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER, Pos)
 {
 	m_Owner = Owner;
@@ -19,18 +19,18 @@ CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEner
 }
 
 
-bool CLaser::HitCharacter(vec2 From, vec2 To)
+bool CLaser::HitCharacter(rvec2 From, rvec2 To)
 {
-	vec2 At;
+	rvec2 At;
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
-	CCharacter *pHit = GameWorld()->IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar);
+	CCharacter *pHit = GameWorld()->IntersectCharacter(m_Pos, To, REAL(0.f), At, pOwnerChar);
 	if(!pHit)
 		return false;
 
 	m_From = From;
 	m_Pos = At;
-	m_Energy = -1;
-	pHit->TakeDamage(vec2(0.f, 0.f), normalize(To-From), g_pData->m_Weapons.m_aId[WEAPON_LASER].m_Damage, m_Owner, WEAPON_LASER);
+	m_Energy = REAL(-1);
+	pHit->TakeDamage(rvec2(REAL(0), REAL(0)), normalize(To-From), g_pData->m_Weapons.m_aId[WEAPON_LASER].m_Damage, m_Owner, WEAPON_LASER);
 	return true;
 }
 
@@ -38,13 +38,13 @@ void CLaser::DoBounce()
 {
 	m_EvalTick = Server()->Tick();
 
-	if(m_Energy < 0)
+	if(m_Energy < REAL(0))
 	{
 		GameWorld()->DestroyEntity(this);
 		return;
 	}
 
-	vec2 To = m_Pos + m_Dir * m_Energy;
+	rvec2 To = m_Pos + m_Dir * m_Energy;
 
 	if(GameServer()->Collision()->IntersectLine(m_Pos, To, 0x0, &To))
 	{
@@ -54,18 +54,18 @@ void CLaser::DoBounce()
 			m_From = m_Pos;
 			m_Pos = To;
 
-			vec2 TempPos = m_Pos;
-			vec2 TempDir = m_Dir * 4.0f;
+			rvec2 TempPos = m_Pos;
+			rvec2 TempDir = m_Dir * REAL(4.0f);
 
-			GameServer()->Collision()->MovePoint(&TempPos, &TempDir, 1.0f, 0);
+			GameServer()->Collision()->MovePoint(&TempPos, &TempDir, REAL(1.0f), 0);
 			m_Pos = TempPos;
 			m_Dir = normalize(TempDir);
 
-			m_Energy -= distance(m_From, m_Pos) + GameServer()->Tuning()->m_LaserBounceCost;
+			m_Energy -= distance(m_From, m_Pos) + (real_t) GameServer()->Tuning()->m_LaserBounceCost;
 			m_Bounces++;
 
 			if(m_Bounces > GameServer()->Tuning()->m_LaserBounceNum)
-				m_Energy = -1;
+				m_Energy = REAL(-1);
 
 			GameServer()->CreateSound(m_Pos, SOUND_LASER_BOUNCE);
 		}
@@ -76,7 +76,7 @@ void CLaser::DoBounce()
 		{
 			m_From = m_Pos;
 			m_Pos = To;
-			m_Energy = -1;
+			m_Energy = REAL(-1);
 		}
 	}
 }

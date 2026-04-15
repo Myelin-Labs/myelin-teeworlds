@@ -1633,7 +1633,7 @@ void CGameClient::OnPredict()
 			{
 				ProcessTriggeredEvents(
 					World.m_apCharacters[m_LocalClientID]->m_TriggeredEvents,
-					World.m_apCharacters[m_LocalClientID]->m_Pos
+					rvec2_to_fvec2(World.m_apCharacters[m_LocalClientID]->m_Pos)
 				);
 			}
 		}
@@ -1679,8 +1679,8 @@ vec2 CGameClient::GetCharPos(int ClientID, bool Predicted) const
 	if(Predicted)
 	{
 		return mix(
-			m_aClients[ClientID].m_PrevPredicted.m_Pos,
-			m_aClients[ClientID].m_Predicted.m_Pos,
+			rvec2_to_fvec2(m_aClients[ClientID].m_PrevPredicted.m_Pos),
+			rvec2_to_fvec2(m_aClients[ClientID].m_Predicted.m_Pos),
 			Client()->PredIntraGameTick()
 		);
 	}

@@ -43,7 +43,7 @@ CEntity *CGameWorld::FindFirst(int Type)
 	return Type < 0 || Type >= NUM_ENTTYPES ? 0 : m_apFirstEntityTypes[Type];
 }
 
-int CGameWorld::FindEntities(vec2 Pos, float Radius, CEntity **ppEnts, int Max, int Type)
+int CGameWorld::FindEntities(rvec2 Pos, real_t Radius, CEntity **ppEnts, int Max, int Type)
 {
 	if(Type < 0 || Type >= NUM_ENTTYPES)
 		return 0;
@@ -204,10 +204,10 @@ void CGameWorld::Tick()
 
 
 // TODO: should be more general
-CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2& NewPos, CEntity *pNotThis)
+CCharacter *CGameWorld::IntersectCharacter(rvec2 Pos0, rvec2 Pos1, real_t Radius, rvec2& NewPos, CEntity *pNotThis)
 {
 	// Find other players
-	float ClosestLen = distance(Pos0, Pos1) * 100.0f;
+	real_t ClosestLen = distance(Pos0, Pos1) * REAL(100.0f);
 	CCharacter *pClosest = 0;
 
 	CCharacter *p = (CCharacter *)FindFirst(ENTTYPE_CHARACTER);
@@ -216,8 +216,8 @@ CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, v
 		if(p == pNotThis)
 			continue;
 
-		vec2 IntersectPos = closest_point_on_line(Pos0, Pos1, p->m_Pos);
-		float Len = distance(p->m_Pos, IntersectPos);
+		rvec2 IntersectPos = closest_point_on_line(Pos0, Pos1, p->m_Pos);
+		real_t Len = distance(p->m_Pos, IntersectPos);
 		if(Len < p->m_ProximityRadius+Radius)
 		{
 			Len = distance(Pos0, IntersectPos);
@@ -234,10 +234,11 @@ CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, v
 }
 
 
-CEntity *CGameWorld::ClosestEntity(vec2 Pos, float Radius, int Type, CEntity *pNotThis)
+CEntity *CGameWorld::ClosestEntity(rvec2 Pos, real_t Radius, int Type, CEntity *pNotThis)
 {
 	// Find other players
-	float ClosestRange = Radius*2;
+	real_t ClosestRange = Radius*2;
+
 	CEntity *pClosest = 0;
 
 	CEntity *p = FindFirst(Type);
@@ -246,7 +247,7 @@ CEntity *CGameWorld::ClosestEntity(vec2 Pos, float Radius, int Type, CEntity *pN
 		if(p == pNotThis)
 			continue;
 
-		float Len = distance(Pos, p->m_Pos);
+		real_t Len = distance(Pos, p->m_Pos);
 		if(Len < p->m_ProximityRadius+Radius)
 		{
 			if(Len < ClosestRange)

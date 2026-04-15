@@ -78,19 +78,19 @@ class IGameController
 		{
 			m_Got = false;
 			m_FriendlyTeam = -1;
-			m_Pos = vec2(100,100);
+			m_Pos = rvec2(REAL(100),REAL(100));
 		}
 
-		vec2 m_Pos;
+		rvec2 m_Pos;
 		bool m_Got;
 		bool m_RandomSpawn;
 		int m_FriendlyTeam;
-		float m_Score;
+		real_t m_Score;
 	};
-	vec2 m_aaSpawnPoints[3][64];
+	rvec2 m_aaSpawnPoints[3][64];
 	int m_aNumSpawnPoints[3];
 
-	float EvaluateSpawnPos(CSpawnEval *pEval, vec2 Pos) const;
+	real_t EvaluateSpawnPos(CSpawnEval *pEval, rvec2 Pos) const;
 	void EvaluateSpawnType(CSpawnEval *pEval, int Type) const;
 
 	// team
@@ -163,7 +163,7 @@ public:
 		Returns:
 			bool?
 	*/
-	virtual bool OnEntity(int Index, vec2 Pos);
+	virtual bool OnEntity(int Index, rvec2 Pos);
 
 	virtual void OnPlayerConnect(class CPlayer *pPlayer);
 	virtual void OnPlayerDisconnect(class CPlayer *pPlayer);
@@ -216,7 +216,7 @@ public:
 	void ChangeMap(const char *pToMap);
 
 	//spawn
-	bool CanSpawn(int Team, vec2 *pPos) const;
+	bool CanSpawn(int Team, rvec2 *pPos) const;
 	bool GetStartRespawnState() const;
 
 	// team

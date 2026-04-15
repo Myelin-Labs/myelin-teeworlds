@@ -33,7 +33,7 @@ private:
 		Variable: m_ProximityRadius
 			Contains the physical size of the entity.
 	*/
-	float m_ProximityRadius;
+	real_t m_ProximityRadius;
 
 	/* State */
 	bool m_MarkedForDestroy;
@@ -45,14 +45,14 @@ protected:
 		Variable: m_Pos
 			Contains the current posititon of the entity.
 	*/
-	vec2 m_Pos;
+	rvec2 m_Pos;
 
 	/* Getters */
 	int GetID() const					{ return m_ID; }
 
 public:
 	/* Constructor */
-	CEntity(CGameWorld *pGameWorld, int Objtype, vec2 Pos, int ProximityRadius=0);
+	CEntity(CGameWorld *pGameWorld, int Objtype, rvec2 Pos, int ProximityRadius=0);
 
 	/* Destructor */
 	virtual ~CEntity();
@@ -66,8 +66,8 @@ public:
 	/* Getters */
 	CEntity *TypeNext()					{ return m_pNextTypeEntity; }
 	CEntity *TypePrev()					{ return m_pPrevTypeEntity; }
-	const vec2 &GetPos() const			{ return m_Pos; }
-	float GetProximityRadius() const	{ return m_ProximityRadius; }
+	const rvec2 &GetPos() const			{ return m_Pos; }
+	real_t GetProximityRadius() const	{ return m_ProximityRadius; }
 	bool IsMarkedForDestroy() const		{ return m_MarkedForDestroy; }
 
 	/* Setters */
@@ -137,9 +137,9 @@ public:
 			Non-zero if the entity doesn't have to be in the snapshot.
 	*/
 	int NetworkClipped(int SnappingClient);
-	int NetworkClipped(int SnappingClient, vec2 CheckPos);
+	int NetworkClipped(int SnappingClient, rvec2 CheckPos);
 
-	bool GameLayerClipped(vec2 CheckPos);
+	bool GameLayerClipped(rvec2 CheckPos);
 };
 
 #endif

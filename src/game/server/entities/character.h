@@ -47,9 +47,9 @@ public:
 	void FireWeapon();
 
 	void Die(int Killer, int Weapon);
-	bool TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weapon);
+	bool TakeDamage(rvec2 Force, rvec2 Source, int Dmg, int From, int Weapon);
 
-	bool Spawn(class CPlayer *pPlayer, vec2 Pos);
+	bool Spawn(class CPlayer *pPlayer, rvec2 Pos);
 	bool Remove();
 
 	bool IncreaseHealth(int Amount);
@@ -112,7 +112,7 @@ private:
 	// ninja
 	struct
 	{
-		vec2 m_ActivationDir;
+		rvec2 m_ActivationDir;
 		int m_ActivationTick;
 		int m_CurrentMoveTime;
 		int m_OldVelAmount;

@@ -5,7 +5,7 @@
 #include "gamecontext.h"
 #include "player.h"
 
-CEntity::CEntity(CGameWorld *pGameWorld, int ObjType, vec2 Pos, int ProximityRadius)
+CEntity::CEntity(CGameWorld *pGameWorld, int ObjType, rvec2 Pos, int ProximityRadius)
 {
 	m_pGameWorld = pGameWorld;
 
@@ -15,7 +15,7 @@ CEntity::CEntity(CGameWorld *pGameWorld, int ObjType, vec2 Pos, int ProximityRad
 	m_ID = Server()->SnapNewID();
 	m_ObjType = ObjType;
 
-	m_ProximityRadius = ProximityRadius;
+	m_ProximityRadius = REAL(ProximityRadius);
 
 	m_MarkedForDestroy = false;
 	m_Pos = Pos;
@@ -32,23 +32,23 @@ int CEntity::NetworkClipped(int SnappingClient)
 	return NetworkClipped(SnappingClient, m_Pos);
 }
 
-int CEntity::NetworkClipped(int SnappingClient, vec2 CheckPos)
+int CEntity::NetworkClipped(int SnappingClient, rvec2 CheckPos)
 {
 	if(SnappingClient == -1)
 		return 0;
 
-	float dx = GameServer()->m_apPlayers[SnappingClient]->m_ViewPos.x-CheckPos.x;
-	float dy = GameServer()->m_apPlayers[SnappingClient]->m_ViewPos.y-CheckPos.y;
+	real_t dx = GameServer()->m_apPlayers[SnappingClient]->m_ViewPos.x-CheckPos.x;
+	real_t dy = GameServer()->m_apPlayers[SnappingClient]->m_ViewPos.y-CheckPos.y;
 
-	if(absolute(dx) > 1000.0f || absolute(dy) > 800.0f)
+	if(absolute(dx) > REAL(1000.0f) || absolute(dy) > REAL(800.0f))
 		return 1;
 
-	if(distance(GameServer()->m_apPlayers[SnappingClient]->m_ViewPos, CheckPos) > 1100.0f)
+	if(distance(GameServer()->m_apPlayers[SnappingClient]->m_ViewPos, CheckPos) > REAL(1100.0f))
 		return 1;
 	return 0;
 }
 
-bool CEntity::GameLayerClipped(vec2 CheckPos)
+bool CEntity::GameLayerClipped(rvec2 CheckPos)
 {
 	int rx = round_to_int(CheckPos.x) / 32;
 	int ry = round_to_int(CheckPos.y) / 32;

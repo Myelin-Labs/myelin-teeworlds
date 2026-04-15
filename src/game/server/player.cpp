@@ -79,7 +79,8 @@ void CPlayer::Tick()
 	if(!GameServer()->m_pController->IsGamePaused())
 	{
 		if(!m_pCharacter && m_Team == TEAM_SPECTATORS && m_SpecMode == SPEC_FREEVIEW)
-			m_ViewPos -= vec2(clamp(m_ViewPos.x-m_LatestActivity.m_TargetX, -500.0f, 500.0f), clamp(m_ViewPos.y-m_LatestActivity.m_TargetY, -400.0f, 400.0f));
+			m_ViewPos -= rvec2(clamp(m_ViewPos.x-m_LatestActivity.m_TargetX, REAL(-500.0f), REAL(500.0f)),
+  			clamp(m_ViewPos.y-m_LatestActivity.m_TargetY, REAL(-400.0f), REAL(400.0f)));
 
 		if(!m_pCharacter && m_DieTick+Server()->TickSpeed()*3 <= Server()->Tick() && !m_DeadSpecMode)
 			Respawn();
@@ -167,13 +168,13 @@ void CPlayer::Snap(int SnappingClient)
 		pSpectatorInfo->m_SpectatorID = m_SpectatorID;
 		if(m_pSpecFlag)
 		{
-			pSpectatorInfo->m_X = m_pSpecFlag->GetPos().x;
-			pSpectatorInfo->m_Y = m_pSpecFlag->GetPos().y;
+			pSpectatorInfo->m_X = static_cast<int>(m_pSpecFlag->GetPos().x);
+			pSpectatorInfo->m_Y = static_cast<int>(m_pSpecFlag->GetPos().y);
 		}
 		else
 		{
-			pSpectatorInfo->m_X = m_ViewPos.x;
-			pSpectatorInfo->m_Y = m_ViewPos.y;
+			pSpectatorInfo->m_X = static_cast<int>(m_ViewPos.x);
+			pSpectatorInfo->m_Y = static_cast<int>(m_ViewPos.y);
 		}
 	}
 
@@ -269,8 +270,8 @@ void CPlayer::OnDirectInput(CNetObj_PlayerInput *NewInput)
 			m_ActiveSpecSwitch = true;
 			if(m_SpecMode == SPEC_FREEVIEW)
 			{
-				CCharacter *pChar = (CCharacter *)GameServer()->m_World.ClosestEntity(m_ViewPos, 6.0f*32, CGameWorld::ENTTYPE_CHARACTER, 0);
-				CFlag *pFlag = (CFlag *)GameServer()->m_World.ClosestEntity(m_ViewPos, 6.0f*32, CGameWorld::ENTTYPE_FLAG, 0);
+				CCharacter *pChar = (CCharacter *)GameServer()->m_World.ClosestEntity(m_ViewPos, REAL(6.0f)*32, CGameWorld::ENTTYPE_CHARACTER, 0);
+				CFlag *pFlag = (CFlag *)GameServer()->m_World.ClosestEntity(m_ViewPos, REAL(6.0f)*32, CGameWorld::ENTTYPE_FLAG, 0);
 				if(pChar || pFlag)
 				{
 					if(!pChar || (pFlag && pChar && distance(m_ViewPos, pFlag->GetPos()) < distance(m_ViewPos, pChar->GetPos())))
@@ -461,7 +462,7 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg)
 
 void CPlayer::TryRespawn()
 {
-	vec2 SpawnPos;
+	rvec2 SpawnPos;
 
 	if(!GameServer()->m_pController->CanSpawn(m_Team, &SpawnPos))
 		return;

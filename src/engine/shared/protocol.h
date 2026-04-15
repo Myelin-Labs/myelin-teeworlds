@@ -84,8 +84,10 @@ enum
 	SERVERINFO_LEVEL_MIN=0,
 	SERVERINFO_LEVEL_MAX=2,
 
-	MAX_CLIENTS=64,
-	MAX_PLAYERS=16,
+  // Tweaked for on-chain environments, this has huge save on
+  // cycles.
+	MAX_CLIENTS=4,
+	MAX_PLAYERS=4,
 
 	MAX_INPUT_SIZE=128,
 	MAX_SNAPSHOT_PACKSIZE=900,

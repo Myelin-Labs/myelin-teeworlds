@@ -71,8 +71,8 @@ void CItems::RenderProjectile(const CNetObj_Projectile *pCurrent, int ItemID)
 
 	vec2 StartPos(pCurrent->m_X, pCurrent->m_Y);
 	vec2 StartVel(pCurrent->m_VelX/100.0f, pCurrent->m_VelY/100.0f);
-	vec2 Pos = CalcPos(StartPos, StartVel, Curvature, Speed, Ct);
-	vec2 PrevPos = CalcPos(StartPos, StartVel, Curvature, Speed, Ct-0.001f);
+	vec2 Pos = rvec2_to_fvec2(CalcPos(fvec2_to_rvec2(StartPos), fvec2_to_rvec2(StartVel), REAL(Curvature), REAL(Speed), REAL(Ct)));
+	vec2 PrevPos = rvec2_to_fvec2(CalcPos(fvec2_to_rvec2(StartPos), fvec2_to_rvec2(StartVel), REAL(Curvature), REAL(Speed), REAL(Ct-0.001f)));
 
 	Graphics()->TextureSet(g_pData->m_aImages[IMAGE_GAME].m_Id);
 	Graphics()->QuadsBegin();

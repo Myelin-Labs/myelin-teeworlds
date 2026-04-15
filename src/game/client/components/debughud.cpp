@@ -29,7 +29,7 @@ void CDebugHud::RenderNetCorrections()
 		vec2(netobjects.local_character->x, netobjects.local_character->y));*/
 
 	float Velspeed = length(vec2(m_pClient->m_Snap.m_pLocalCharacter->m_VelX/256.0f, m_pClient->m_Snap.m_pLocalCharacter->m_VelY/256.0f))*50;
-	float Ramp = VelocityRamp(Velspeed, m_pClient->m_Tuning.m_VelrampStart, m_pClient->m_Tuning.m_VelrampRange, m_pClient->m_Tuning.m_VelrampCurvature);
+	float Ramp = static_cast<float>(VelocityRamp(REAL(Velspeed), m_pClient->m_Tuning.m_VelrampStart, m_pClient->m_Tuning.m_VelrampRange, m_pClient->m_Tuning.m_VelrampCurvature));
 
 	const char *paStrings[] = {"velspeed:", "velspeed*ramp:", "ramp:", "Pos", " x:", " y:", "netmsg failed on:", "netobj num failures:", "netobj failed on:"};
 	const int Num = sizeof(paStrings)/sizeof(char *);
@@ -118,8 +118,16 @@ void CDebugHud::RenderTuning()
 	{
 		char aBuf[128];
 		float Current, Standard;
-		m_pClient->m_Tuning.Get(i, &Current);
-		StandardTuning.Get(i, &Standard);
+		{
+  		real_t v;
+  		m_pClient->m_Tuning.Get(i, &v);
+  		Current = static_cast<float>(v);
+		}
+		{
+  		real_t v;
+  		StandardTuning.Get(i, &v);
+  		Standard = static_cast<float>(v);
+		}
 
 		if(Standard == Current)
 			TextRender()->TextColor(1,1,1,1.0f);
@@ -154,7 +162,7 @@ void CDebugHud::RenderTuning()
 	for(int i = 0; i < 100; i++)
 	{
 		float Speed = i/100.0f * 3000;
-		float Ramp = VelocityRamp(Speed, m_pClient->m_Tuning.m_VelrampStart, m_pClient->m_Tuning.m_VelrampRange, m_pClient->m_Tuning.m_VelrampCurvature);
+		float Ramp = static_cast<float>(VelocityRamp(REAL(Speed), m_pClient->m_Tuning.m_VelrampStart, m_pClient->m_Tuning.m_VelrampRange, m_pClient->m_Tuning.m_VelrampCurvature));
 		float RampedSpeed = (Speed * Ramp)/1000.0f;
 		Array[i] = IGraphics::CLineItem((i-1)*2, y+Height-pv*Height, i*2, y+Height-RampedSpeed*Height);
 		//Graphics()->LinesDraw((i-1)*2, 200, i*2, 200);

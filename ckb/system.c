@@ -10,7 +10,7 @@
 extern "C" {
 #endif /* __cplusplus */
 #include <ckb_consts.h>
-#include <ckb_syscall_apis.h>
+#include <ckb_syscalls.h>
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

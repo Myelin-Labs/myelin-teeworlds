@@ -7,7 +7,7 @@
 #include "character.h"
 #include "pickup.h"
 
-CPickup::CPickup(CGameWorld *pGameWorld, int Type, vec2 Pos)
+CPickup::CPickup(CGameWorld *pGameWorld, int Type, rvec2 Pos)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP, Pos, PickupPhysSize)
 {
 	m_Type = Type;
@@ -42,7 +42,7 @@ void CPickup::Tick()
 			return;
 	}
 	// Check if a player intersected us
-	CCharacter *pChr = (CCharacter *)GameWorld()->ClosestEntity(m_Pos, 20.0f, CGameWorld::ENTTYPE_CHARACTER, 0);
+	CCharacter *pChr = (CCharacter *)GameWorld()->ClosestEntity(m_Pos, REAL(20.0f), CGameWorld::ENTTYPE_CHARACTER, 0);
 	if(pChr && pChr->IsAlive())
 	{
 		// player picked us up, is someone was hooking us, let them go

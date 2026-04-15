@@ -65,9 +65,16 @@ inline unsigned int CalculateVMStateCRC(CGameContext* pContext) {
       StateCRC ^= (Score << (i % 8));
 
       // Incorporate Camera/View Position
-      vec2 Pos = pContext->m_apPlayers[i]->m_ViewPos;
+      rvec2 Pos = pContext->m_apPlayers[i]->m_ViewPos;
+#ifdef CONF_FIXED_POINT_MATH
+      StateCRC ^= (unsigned int)(Pos.x.raw_value()) << 4;
+      StateCRC ^= (unsigned int)(Pos.x.raw_value() >> 8);
+      StateCRC ^= (unsigned int)(Pos.y.raw_value()) << 2;
+      StateCRC ^= (unsigned int)(Pos.y.raw_value() >> 8);
+#else
       StateCRC ^= (unsigned int)(Pos.x) << 4;
       StateCRC ^= (unsigned int)(Pos.y) >> 2;
+#endif
     }
   }
   return StateCRC;
@@ -118,7 +125,8 @@ class CMemoryTapeStream : public ITapeStream {
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
-#include <ckb_syscalls.h>
+#include <ckb_consts.h>
+#include <ckb_syscall_apis.h>
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

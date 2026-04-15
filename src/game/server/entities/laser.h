@@ -8,7 +8,7 @@
 class CLaser : public CEntity
 {
 public:
-	CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner);
+	CLaser(CGameWorld *pGameWorld, rvec2 Pos, rvec2 Direction, real_t StartEnergy, int Owner);
 
 	virtual void Reset();
 	virtual void Tick();
@@ -16,13 +16,13 @@ public:
 	virtual void Snap(int SnappingClient);
 
 protected:
-	bool HitCharacter(vec2 From, vec2 To);
+	bool HitCharacter(rvec2 From, rvec2 To);
 	void DoBounce();
 
 private:
-	vec2 m_From;
-	vec2 m_Dir;
-	float m_Energy;
+	rvec2 m_From;
+	rvec2 m_Dir;
+	real_t m_Energy;
 	int m_Bounces;
 	int m_EvalTick;
 	int m_Owner;
