@@ -6,6 +6,16 @@ long __ckb_hijack_brk_max = 0x00400000;
 #include <replayer/replayer.h>
 
 int main() {
+  {
+    uint64_t len = 0;
+    int ret = ckb_load_cell_by_field(NULL, &len, 0, 0, CKB_SOURCE_GROUP_INPUT,
+                                     CKB_CELL_FIELD_CAPACITY);
+    // For the initial cell deployment, skip replays.
+    if (ret == CKB_INDEX_OUT_OF_BOUND) {
+      return 0;
+    }
+  }
+
   CCkbTapeStream tape(1, CKB_SOURCE_INPUT, 0);
   CGameContext* pGameServer = new CGameContext;
   IKernel* pKernel = IKernel::Create();

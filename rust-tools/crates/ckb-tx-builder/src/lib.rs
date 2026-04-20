@@ -2,38 +2,17 @@ use ckb_testtool::{
     ckb_types::{bytes::Bytes, core::TransactionBuilder, packed::*, prelude::*},
     context::Context,
 };
-use clap::Parser;
 
-#[derive(Debug, Parser)]
-#[command(version, about, long_about = None)]
-struct Cli {
-    /// Replayer script file
-    #[arg(long)]
-    replayer: String,
-
-    /// Input tape
-    #[arg(long)]
-    tape: String,
-
-    /// Map file
-    #[arg(long)]
-    map: String,
-
-    /// Config file
-    #[arg(long)]
-    config: String,
-
-    /// Output json tx file
-    #[arg(long)]
-    output: String,
-}
-
-fn main() {
-    let cli = Cli::parse();
-
+pub fn build_test_tx(
+    replayer: &str,
+    tape: &str,
+    map: &str,
+    config: &str,
+    output: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut context = Context::default();
     let always_success_bin: Bytes = ckb_always_success_script::ALWAYS_SUCCESS.to_vec().into();
-    let replayer_bin: Bytes = std::fs::read(&cli.replayer).expect("read replayer").into();
+    let replayer_bin: Bytes = std::fs::read(replayer).expect("read replayer").into();
     let always_success_out_point = context.deploy_cell(always_success_bin);
     let replayer_out_point = context.deploy_cell(replayer_bin);
 
@@ -64,9 +43,9 @@ fn main() {
     ];
     let outputs_data = vec![Bytes::new(); 1];
 
-    let tape: Bytes = std::fs::read(&cli.tape).expect("read tape").into();
-    let map: Bytes = std::fs::read(&cli.map).expect("read map").into();
-    let config: Bytes = std::fs::read(&cli.config).expect("read config").into();
+    let tape: Bytes = std::fs::read(tape).expect("read tape").into();
+    let map: Bytes = std::fs::read(map).expect("read map").into();
+    let config: Bytes = std::fs::read(config).expect("read config").into();
 
     let tx = TransactionBuilder::default()
         .input(input)
@@ -79,11 +58,12 @@ fn main() {
         .build();
     let tx = context.complete_tx(tx);
 
-    let repr_tx = context.dump_tx(&tx).expect("dump tx");
+    let repr_tx = context.dump_tx(&tx)?;
 
     std::fs::write(
-        &cli.output,
+        output,
         serde_json::to_string_pretty(&repr_tx).expect("to json"),
-    )
-    .expect("write tx")
+    )?;
+
+    Ok(())
 }

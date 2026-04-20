@@ -16,6 +16,7 @@ class CMockServer : public IServer {
   }
 
   void OnTick() { m_CurrentGameTick++; }
+  virtual void AfterTick() {}
 
   virtual const char* ClientName(int ClientID) const {
     (void)ClientID;
@@ -141,7 +142,9 @@ class CMockStorage : public IStorage {
         return Handle;
     }
 
-    pBuffer[0] = 0;
+    if (pBuffer) {
+      pBuffer[0] = 0;
+    }
     return 0;
   }
 
@@ -236,6 +239,7 @@ int ReplayGame(CMockServer* pServer, CGameContext* pGameServer,
       case TAPE_TICK: {
         pServer->OnTick();
         pGameServer->OnTick();
+        pServer->AfterTick();
       } break;
       case TAPE_END_MATCH: {
         // Match is ended
