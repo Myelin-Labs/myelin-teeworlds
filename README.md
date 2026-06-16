@@ -1,3 +1,7 @@
+# Teeworlds on CKB
+
+This Teeworlds fork records and runs the core gameplay on [Nervos CKB](https://github.com/nervosnetwork/ckb), refer to [this file](./ckb/README.md) for details.
+
 <a href="https://repology.org/metapackage/teeworlds/versions">
     <img src="https://repology.org/badge/vertical-allrepos/teeworlds.svg" alt="Packaging status" align="right">
 </a>
