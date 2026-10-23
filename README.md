@@ -51,12 +51,17 @@ The GitHub release bundle includes this matching pair in `release/`, the map/con
 Set a random `RUNTIME_TOKEN` of at least 32 characters through your environment or a private server-side secret file. Do not put it in a game bundle or Git. Then:
 
 ```sh
+npm ci --prefix service
 node service/server.mjs
 ```
 
 The default bind is `127.0.0.1:8783`; `BIND`, `PORT`, `DATA_DIR`, and `TEEWORLDS_ASSETS` are configurable. `MATCH_TICKS` is for bounded local tests (50–3000); production defaults to 3000.
 
+Live controls use a persistent WebSocket. Movement/jump/fire changes are sent immediately; pointer input is sampled at up to 50 Hz. The native engine publishes snapshots at 25 Hz. The local character displays the latest authoritative position; only remote characters interpolate over 40 ms. There is no local movement prediction. A failed socket reconnects automatically and uses the HTTP compatibility path until ready. The HUD reports round-trip time, not total input-to-display latency.
+
 Host `web/` at `/games/teeworlds/`. Forward authenticated `/games/teeworlds/api/{state,action,export}` requests to this service's `/api/` routes, injecting `X-Runtime-Token` and the 64-character account identifier in `X-UTXOPlay-Account`. Enforce same-origin writes and account/IP quotas at the gateway. Never expose this service directly to browsers or trust account headers supplied by them. UTXOPlay's deployment supplies these controls.
+
+Proxy same-origin WebSocket upgrades from `/games/teeworlds/api/socket` to `/api/socket` with the same server-injected credentials. Authenticate the upgrade cookie and its exact Origin, recheck session validity on traffic, bound message size/rate and queued bytes, and close upstream connections when the browser leaves. The private runtime emits `{type:"ready"}`, `{type:"state",room}`, and `{type:"pong",time}` messages. Send `{type:"input",room,input}` or `{type:"ping",time}`; create/join/leave remain HTTP actions. State includes `appliedSeq`, the latest input sequence consumed by the engine for that snapshot, for measuring input-to-authoritative-state latency.
 
 Actions: `{type:"create",mode:"practice"|"duel"}`, `{type:"join",room}`, `{type:"input",room,input}`, and `{type:"leave"}`. Controls contain `direction`, `x`, `y`, `jump`, `fire`, `hook`, `weapon`, and monotonic `seq`. Fire is the upstream six-bit edge counter, not a boolean. Simulation time and participant slots are never client-controlled.
 

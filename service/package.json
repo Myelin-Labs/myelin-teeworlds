@@ -1,0 +1,7 @@
+{
+  "name": "myelin-teeworlds-runtime",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "dependencies": {"ws": "8.22.0"}
+}
