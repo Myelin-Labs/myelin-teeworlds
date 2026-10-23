@@ -86,3 +86,7 @@ The Docker image runs as a non-root user. Its deployment uses a private network,
 - UTXOPlay browser and Myelin integration: Myelin Labs. This is explicitly a modified distribution, not the original official client.
 - Teeworlds data/map/skin/weapon assets and derived presentation/cover art: CC BY-SA 3.0, with full author attribution in [web/credits.html](web/credits.html). Original artwork files are copied without image alteration; Canvas applies tint/layout at rendering time.
 - The Myelin session adapter derives from the MIT-licensed Myelin Chess adapter; its MIT notice is retained in `myelin/LICENSE`. Third-party notices inside upstream source remain intact.
+
+### Browser performance
+
+The browser caches static terrain in a bounded 32-chunk atlas, updates HUD text only when it changes, and uses visibility-aware rendering with adaptive resolution. Gameplay renders at up to 60 Hz; menus use 30 Hz and hidden documents stop drawing. `web/performance.mjs` is the presentation scheduler shared with UTXOPlay. Native 50 Hz ticks, collision constraints, input frequency and replay verification are unchanged. UTXOPlay's Display preferences exposes adaptive/high/performance resolution choices.
