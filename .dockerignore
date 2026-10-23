@@ -1,0 +1,7 @@
+.git
+build
+myelin/target
+service/data
+service/node_modules
+ckb
+rust-tools

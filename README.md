@@ -1,218 +1,83 @@
-# Teeworlds on CKB
+# Teeworlds — Myelin Edition
 
-This Teeworlds fork records and runs the core gameplay on [Nervos CKB](https://github.com/nervosnetwork/ckb), refer to [this file](./ckb/README.md) for details.
+Play at **https://store.utxoplay.io/play/teeworlds**.
 
-<a href="https://repology.org/metapackage/teeworlds/versions">
-    <img src="https://repology.org/badge/vertical-allrepos/teeworlds.svg" alt="Packaging status" align="right">
-</a>
+A modified distribution of [xxuejie's Teeworlds on CKB fork](https://github.com/xxuejie/teeworlds/tree/f77e39e5fa5bfa0b4831d8d6d7c4690183807a29), adapted to Myelin and UTXOPlay. This preserves the original fixed-point game simulation and provides a new Canvas browser renderer, practice bot, private online duels, and signed, independently replayable match records.
 
-Teeworlds ![GitHub Actions](https://github.com/teeworlds/teeworlds/workflows/Build/badge.svg)
-=========
+## Play
 
-A retro multiplayer shooter
----------------------------
+Use A/D or the arrow keys to move, Space to double jump, mouse to aim, left click to fire, right click to hook, and 1–5 to select a collected weapon. Practice starts immediately against a basic bot. Create a duel and share the room code with a friend; the match starts when they join. Each round lasts 60 seconds. Mobile has touch controls, while mouse and keyboard provide the best control.
 
-Teeworlds is a free online multiplayer game, available for all major
-operating systems. Battle with up to 16 players in a variety of game
-modes, including Team Deathmatch and Capture The Flag. You can even
-design your own maps!
+UTXOPlay handles guest or CKB-compatible wallet login. The room service only accepts the authenticated account supplied by the private platform gateway. Players never supply a numeric room slot. Both participants can download the same completed match export.
 
-This software is provided 'as-is', without any express or implied
-warranty. In no event will the authors be held liable for any damages
-arising from the use of this software. See license.txt for full license
-text including copyright information.
+## Architecture
 
-Please visit https://www.teeworlds.com/ for up-to-date information about
-the game, including new versions, custom maps and much more.
+```mermaid
+flowchart LR
+  Browser[Canvas browser client] --> Gateway[UTXOPlay authenticated gateway]
+  Gateway --> Rooms[Private Node room service]
+  Rooms --> Engine[Original C++ simulation at 50 Hz]
+  Engine --> Tape[Canonical input tape + final gameplay snapshot]
+  Tape --> Replay[Independent native replay]
+  Replay --> Myelin[Myelin SessionChain + PoA finality]
+  Myelin --> Store[Persistent match record + downloadable export]
+```
 
-Originally written by Magnus Auvinen.
+- `src/browser/bridge.cpp`: a long-lived upstream `ReplayGame` invocation with streamed inputs and snapshots. Current character cores are exposed by a read-only accessor to avoid desktop-client dead-reckoning assumptions. Physics, collisions, hooks, weapons, pickups, and scoring remain upstream code.
+- `service/server.mjs`: two-player membership, a server-controlled tick clock, ordered bounded inputs, stale-input neutralization, room expiration, and bounded verification work. Live matches run natively; the browser only renders and submits controls.
+- `myelin/`: a Rust `TransitionExecutor` that validates the tape grammar, independently runs the pinned native engine, compares its result, and commits one complete match as a Myelin frame. The application profile commits to the exact bridge binary, map, config, adapter, and dependency lockfile. The frame includes participants, room, full tape, and result; Myelin's cryptographic commitments bind them together.
+- `web/`: browser client and attribution. `web/assets/map.json` contains the actual dm1 collision layer emitted by the bridge. The map's presentation is new; its geometry is unchanged.
 
----
+This is a **native replay and Myelin session release**. It does not submit matches to CKB, claim CKB-VM cycle measurements, establish permissionless consensus, or prove fair server input ordering. Upstream CKB tools remain in `ckb/` and `rust-tools/`; their original instructions are in [README.upstream.md](README.upstream.md). Myelin's existing `teeworlds vm-probe` command can separately run a built upstream RISC-V replayer. That is not the production store execution path.
 
-Teeworlds supports two build systems: CMake and bam.
+The upstream 32-bit CRC is retained for compatibility and is not treated as a cryptographic state hash. Export verification re-executes the committed tape and checks Myelin state roots and signatures. An export is self-contained; trusting a particular issuing authority is a separate policy from checking replay consistency.
 
-Building on Linux or macOS (CMake)
-==========================
+## Build
 
-Installing dependencies
------------------------
+Node 22.23+, Rust 1.97.1, CMake, Ninja, Clang/libclang, protobuf, Python 3, and zlib development headers are required. The Myelin dependencies are pinned to `5c38d13348e1d2673ae52c742dabce0aa0308195`.
 
-    # Debian/Ubuntu
-    sudo apt install build-essential cmake git libfreetype6-dev libsdl2-dev libpnglite-dev libwavpack-dev python3
-    
-    # Fedora
-    sudo dnf install @development-tools cmake gcc-c++ git freetype-devel pnglite-devel python3 SDL2-devel wavpack-devel
-    
-    # Arch Linux (doesn't have pnglite in its repositories)
-    sudo pacman -S --needed base-devel cmake freetype2 git python sdl2 wavpack
-    
-    # macOS
-    brew install cmake freetype sdl2
+```sh
+git clone --recurse-submodules https://github.com/Myelin-Labs/myelin-teeworlds
+cd myelin-teeworlds
+./scripts/build-utxoplay.sh
+```
 
+For Linux x86-64 Bookworm-compatible binaries, build inside `deploy/Builder.Dockerfile` (Docker or Podman), mount the checkout at `/src`, and run the script there. The exact bridge bytes are part of the application profile. Do not strip or replace the bridge after compiling the Myelin verifier. Keep released engine/verifier pairs with archived exports.
 
-Downloading repository
-----------------------
+The GitHub release bundle includes this matching pair in `release/`, the map/config, web client, service, and source revision. No runtime keys or account data are included.
 
-    git clone https://github.com/teeworlds/teeworlds --recurse-submodules
-    cd teeworlds
-    
-    # If you already cloned the repository before, use:
-    # git submodule update --init
+## Run and integrate
 
+Set a random `RUNTIME_TOKEN` of at least 32 characters through your environment or a private server-side secret file. Do not put it in a game bundle or Git. Then:
 
-Building
---------
+```sh
+node service/server.mjs
+```
 
-    mkdir -p build
-    cd build
-    cmake ..
-    make
+The default bind is `127.0.0.1:8783`; `BIND`, `PORT`, `DATA_DIR`, and `TEEWORLDS_ASSETS` are configurable. `MATCH_TICKS` is for bounded local tests (50–3000); production defaults to 3000.
 
-On subsequent builds, you only have to repeat the `make` step.
+Host `web/` at `/games/teeworlds/`. Forward authenticated `/games/teeworlds/api/{state,action,export}` requests to this service's `/api/` routes, injecting `X-Runtime-Token` and the 64-character account identifier in `X-UTXOPlay-Account`. Enforce same-origin writes and account/IP quotas at the gateway. Never expose this service directly to browsers or trust account headers supplied by them. UTXOPlay's deployment supplies these controls.
 
-You can then run the client with `./teeworlds` and the server with
-`./teeworlds_srv`.
+Actions: `{type:"create",mode:"practice"|"duel"}`, `{type:"join",room}`, `{type:"input",room,input}`, and `{type:"leave"}`. Controls contain `direction`, `x`, `y`, `jump`, `fire`, `hook`, `weapon`, and monotonic `seq`. Fire is the upstream six-bit edge counter, not a boolean. Simulation time and participant slots are never client-controlled.
 
+```sh
+node tests/acceptance.mjs
+cargo test --locked --manifest-path myelin/Cargo.toml
+TEEWORLDS_ASSETS=./release ./release/myelin-teeworlds verify downloaded-export.json
+```
 
-Build options
--------------
+The acceptance test uses disposable identities and short real matches. It checks two-player membership, cross-account isolation, malformed input rejection, native replay, Myelin sealing, independent export verification, tampering, and persistence across a service restart.
 
-The following options can be passed to the `cmake ..` command line (between the
-`cmake` and `..`) in the "Building" step above.
+## Operations and limits
 
-`-GNinja`: Use the Ninja build system instead of Make. This automatically
-parallelizes the build and is generally **faster**. (Needs `sudo apt install
-ninja-build` on Debian, `sudo dnf install ninja-build` on Fedora, and `sudo
-pacman -S --needed ninja` on Arch Linux.)
+Keep `DATA_DIR` private and writable by the container user. It contains room metadata, input tapes, participants, Myelin records, and signing keys. Finished match exports persist across restarts. Unfinished matches are marked interrupted after restart; they are not represented as verified. Waiting rooms expire after five minutes. The first release caps active/waiting/sealing rooms at eight and serializes replay workers. UTXOPlay additionally limits each account to 20 room creations per hour.
 
-`-DDEV=ON`: Enable debug mode and disable some release mechanics. This leads to
-**faster** builds.
+The Docker image runs as a non-root user. Its deployment uses a private network, read-only root filesystem, dropped capabilities, memory/CPU/PID limits, and a persistent data volume. Preserve the previous image and corresponding artifacts for rollback. Back up data while writers are stopped. Automatic backup/retention scheduling is outside this release.
 
-`-DCLIENT=OFF`: Disable generation of the client target. Can be useful on
-headless servers which don't have graphics libraries like SDL2 installed.
+## Provenance and licenses
 
-Building on Linux or macOS (bam)
-==========================
-
-Installing dependencies
------------------------
-
-    # Debian/Ubuntu 19.10+
-    sudo apt install bam git libfreetype6-dev libsdl2-dev libpnglite-dev libwavpack-dev python3
-    
-    # Fedora
-    sudo dnf install bam gcc-c++ git freetype-devel pnglite-devel python3 SDL2-devel wavpack-devel
-    
-    # Arch Linux (doesn't have pnglite in its repositories)
-    sudo pacman -S --needed base-devel bam freetype2 git python sdl2 wavpack
-    
-    # macOS
-    brew install bam freetype sdl2
-    
-    # other (add bam to your path)
-    git clone https://github.com/teeworlds/bam
-    cd bam
-    ./make_unix.sh
-
-
-Downloading repository
-----------------------
-
-    git clone https://github.com/teeworlds/teeworlds --recurse-submodules
-    cd teeworlds
-    
-    # If you already cloned the repository before, use:
-    # git submodule update --init
-
-
-Building
---------
-
-    bam
-
-The compiled game is located in a sub-folder of `build`. You can run the client from there with `./teeworlds` and the server with `./teeworlds_srv`.
-
-
-Build options
--------------
-
-One of the following targets can be added to the `bam` command line: `game` (default), `server`, `client`, `content`, `masterserver`, `tools`.
-
-The following options can also be added.
-
-`conf=release` to build in release mode (defaults to `conf=debug`).
-
-`arch=x86` or `arch=x86_64` to force select an architecture.
-
-Building on Windows with Visual Studio & CMake
-======================
-
-Download and install some version of [Microsoft Visual
-Studio](https://www.visualstudio.com/) (as of writing, MSVS Community 2019)
-with the following components:
-
-* Desktop development with C++ (on the main page)
-* Python development (on the main page)
-* Git for Windows (in Individual Components → Code tools)
-
-Run Visual Studio. Open the Team Explorer (View → Team Explorer, Ctrl+^,
-Ctrl+M). Click Clone (in the Team Explorer, Connect → Local Git Repositories).
-Enter `https://github.com/teeworlds/teeworlds` into the first input box. Wait
-for the download to complete (terminals might pop up).
-
-Wait until the CMake configuration is done (watch the Output windows at the
-bottom).
-
-Select `teeworlds.exe` in the Select Startup Item… combobox next to the green
-arrow. Wait for the compilation to finish.
-
-For subsequent builds you only have to click the button with the green arrow
-again.
-
-Building on Windows with MSVC build tools & bam
-======================
-
-Download and install [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and [Python](https://www.python.org/downloads/).
-
-Download and unzip [Teeworlds stable sources](https://github.com/teeworlds/teeworlds/releases) or [Teeworlds latest sources](https://github.com/teeworlds/teeworlds/archive/master.zip).
-
-Download and unzip [bam](https://github.com/matricks/bam/archive/v0.5.1.tar.gz) to `teeworlds-version\bam`.
-
-Run the `x64 Native Tools Command Prompt` (or `x86` for 32-bit) from the start menu.
-
-    # Navigate to the Teeworlds source directory
-    cd ...\teeworlds-version
-    
-    # Build bam (use make_win32_msvc.bat for 32-bit)
-    cd bam
-    make_win64_msvc.bat
-    copy bam ..
-    cd ..
-    
-    # Build Teeworlds
-    bam conf=release
-
-Use `conf=debug` to build the debug version instead. You can also provide a target after the `bam` command : `game` (default), `server`, `client`, `content`, `masterserver`, `tools`.
-
-Building on Windows with MinGW & CMake
-======================
-
-Download and install MinGW with at least the following components:
-
-- mingw-developer-toolkit-bin
-- mingw32-base-bin
-- mingw32-gcc-g++-bin
-- msys-base-bin
-
-Also install [Git](https://git-scm.com/downloads) (for downloading the source
-code), [Python](https://www.python.org/downloads/) and
-[CMake](https://cmake.org/download/).
-
-Open CMake ("CMake (cmake-gui)" in the start menu). Click "Browse Source"
-(first line) and select the directory with the Teeworlds source code. Next,
-click "Browse Build" and create a subdirectory for the build (e.g. called
-"build"). Then click "Configure". Select "MinGW Makefiles" as the generator and
-click "Finish". Wait a bit (until the progress bar is full). Then click
-"Generate".
-
-You can now build Teeworlds by executing `mingw32-make` in the build directory.
+- Original Teeworlds: Magnus Auvinen and contributors; source retains [license.txt](license.txt).
+- Fixed-point/CKB adaptation: xxuejie, pinned upstream commit `f77e39e5fa5bfa0b4831d8d6d7c4690183807a29`. [Article](https://xuejie.space/2026_06_16_teeworlds_on_ckb/).
+- UTXOPlay browser and Myelin integration: Myelin Labs. This is explicitly a modified distribution, not the original official client.
+- Teeworlds data/map/skin/weapon assets and derived presentation/cover art: CC BY-SA 3.0, with full author attribution in [web/credits.html](web/credits.html). Original artwork files are copied without image alteration; Canvas applies tint/layout at rendering time.
+- The Myelin session adapter derives from the MIT-licensed Myelin Chess adapter; its MIT notice is retained in `myelin/LICENSE`. Third-party notices inside upstream source remain intact.

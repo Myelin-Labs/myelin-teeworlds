@@ -1685,6 +1685,14 @@ target_link_libraries(${TARGET_REPLAYER} ${LIBS})
 list(APPEND TARGETS_OWN ${TARGET_REPLAYER})
 list(APPEND TARGETS_LINK ${TARGET_REPLAYER})
 
+# UTXOPlay browser bridge: upstream simulation, separate presentation/transport.
+add_executable(teeworlds_bridge src/browser/bridge.cpp ${GAME_SERVER} ${GAME_GENERATED_SERVER} ${DEPS}
+  $<TARGET_OBJECTS:engine-shared> $<TARGET_OBJECTS:game-shared>)
+target_link_libraries(teeworlds_bridge ${LIBS})
+list(APPEND TARGETS_OWN teeworlds_bridge)
+list(APPEND TARGETS_LINK teeworlds_bridge)
+
+
 ########################################################################
 # VARIOUS TARGETS
 ########################################################################

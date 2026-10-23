@@ -81,3 +81,11 @@ rules.ninja
 /ckb/build/
 /ckb/*.json
 /ckb/flame*
+
+# UTXOPlay adapter outputs and private runtime data
+/myelin/target/
+/myelin/data/
+/web/assets/generated/
+/service/node_modules/
+/service/data/
+/release/

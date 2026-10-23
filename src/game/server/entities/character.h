@@ -63,6 +63,9 @@ public:
 	bool IsAlive() const { return m_Alive; }
 	class CPlayer *GetPlayer() { return m_pPlayer; }
 
+// UTXOPlay presentation accessor: no simulation state is modified.
+	void BrowserCore(CNetObj_CharacterCore *pCore) { m_Core.Write(pCore); }
+
 private:
 	// player controlling this character
 	class CPlayer *m_pPlayer;

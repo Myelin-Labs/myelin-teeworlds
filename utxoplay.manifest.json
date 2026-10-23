@@ -1,0 +1,8 @@
+{
+  "name": "Teeworlds — Myelin Edition",
+  "version": "0.1.0",
+  "entrypoint": "https://store.utxoplay.io/play/teeworlds",
+  "genre": "action",
+  "runtime": "browser",
+  "capabilities": ["player", "session"]
+}
