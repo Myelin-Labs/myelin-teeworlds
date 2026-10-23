@@ -20,6 +20,18 @@ The fixture in `tests/fixtures/public-duel-session.json` uses only disposable te
 TEEWORLDS_ASSETS=./release ./release/myelin-teeworlds verify tests/fixtures/public-duel-session.json
 ```
 
+## Realtime input update (v0.1.1)
+
+Implementation commit: `71182350`. UTXOPlay gateway version: `0.2.1`.
+
+The earlier browser path submitted controls every 80 ms, polled snapshots every 100 ms, and interpolated local movement over another 100 ms. The update uses authenticated, same-origin WebSockets through the store gateway, pushes engine snapshots every 40 ms, immediately sends key/button changes, and displays the local character's latest authoritative position. Only remote players interpolate. No native engine or Myelin application-profile bytes changed.
+
+Two local end-to-end runs measured 36–38 ms from input submission to the snapshot that consumed that sequence; mean snapshot spacing was 41–42 ms. The local browser displayed 6–8 ms WebSocket RTT and completed a verified practice round with no captured console errors. Eight public input-to-snapshot samples had a median of 58 ms and a range of 38–61 ms. These are point measurements from this test machine, not a latency guarantee or a measurement of display scan-out. Network distance and the remaining 25 Hz snapshot cadence still affect feel; client-side movement prediction is not implemented.
+
+A full public 3,000-tick duel then completed over the realtime path using two disposable CKB signing identities. Both players downloaded identical exports, and a separate local native replay verified state root `ce350e229e18db52d94f9446dc7d14c06175e2bca39676f62d51b0712fd35a21`. This export is preserved in `tests/fixtures/public-realtime-duel-session.json`. No funds or transactions were involved.
+
+The realtime integration test covers cookie authentication, exact-Origin rejection, ignored injected account identifiers, actual native character direction changes, stale-sequence and malformed-input handling, logout revocation, reconnect, and a successful Myelin seal. Oversized messages, message rates, socket counts, and queued output are bounded. HTTP remains a visibly labeled fallback during reconnect.
+
 ## Verification limits
 
 The embedded browser's public-domain screenshot operation timed out, while public HTTPS/API checks and local browser interactions passed. Its viewport override did not change the observed DOM width, so mobile layout is not claimed as device-tested. Real wallet extension/Passkey prompts retain the store's existing device-specific acceptance requirements. The production Teeworlds run was a real 60-second integration test, not a load test of the eight-room capacity.
