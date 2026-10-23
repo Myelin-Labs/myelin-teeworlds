@@ -4,6 +4,7 @@ cd "$(dirname "$0")/.."
 git submodule update --init datasrc/maps
 cmake -S . -B build -G Ninja -DCLIENT=OFF -DDOWNLOAD_GTEST=OFF -DCMAKE_BUILD_TYPE=Release
 cmake --build build --target teeworlds_bridge teeworlds_replayer -j"${BUILD_JOBS:-4}"
+python3 scripts/export-map.py
 cargo build --locked --manifest-path myelin/Cargo.toml
 mkdir -p release
 cp build/teeworlds_bridge release/
